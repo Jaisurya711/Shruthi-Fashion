@@ -1,0 +1,8 @@
+{
+  "name": "Kovai Thari | Women's Couture & Handloom Coimbatore",
+  "description": "Premium women's clothing store in Coimbatore featuring authentic handloom cotton sarees, festive silk sets, designer anarkalis, bridal collections with secure checkout and express delivery.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
