@@ -1,15 +1,29 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Phone, MessageCircle, MapPin, Instagram, Youtube, Sparkles, Settings } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import { SHOP_INFO } from '../data/products';
 
 export const Footer: React.FC = () => {
   const { setFilters, setIsStoreManagerOpen } = useStore();
+  const [ownerClickCount, setOwnerClickCount] = useState(0);
 
   const handleNav = (cat: string, subcat?: string) => {
     setFilters({ category: cat, subcategory: subcat || 'All Styles' });
     const el = document.getElementById('catalog-section');
     el?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleOwnerClick = () => {
+    const nextCount = ownerClickCount + 1;
+    if (nextCount >= 5) {
+      setOwnerClickCount(0);
+      setIsStoreManagerOpen(true);
+    } else {
+      setOwnerClickCount(nextCount);
+      setTimeout(() => {
+        setOwnerClickCount(0);
+      }, 4000);
+    }
   };
 
   return (
@@ -24,9 +38,6 @@ export const Footer: React.FC = () => {
             <div className="flex items-center gap-2">
               <span className="font-serif text-3xl font-black text-amber-400 tracking-tight">
                 Shruthi Fashion
-              </span>
-              <span className="bg-amber-900 text-amber-200 text-[10px] font-bold px-2 py-0.5 rounded">
-                Kovundampalayam
               </span>
             </div>
             
@@ -66,118 +77,118 @@ export const Footer: React.FC = () => {
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-stone-900 hover:bg-stone-800 border border-stone-800 rounded text-xs text-stone-300 hover:text-white transition-colors"
               >
                 <Youtube className="w-3.5 h-3.5 text-red-500" />
-                <span>{SHOP_INFO.youtubeHandle}</span>
+                <span>YouTube Channel</span>
               </a>
             </div>
           </div>
 
-          {/* Kurtis Collection */}
-          <div className="space-y-3 text-xs">
-            <p className="font-bold text-white uppercase tracking-wider text-[11px]">
+          {/* Col 2: Kurti Collections */}
+          <div className="space-y-3">
+            <p className="text-xs font-bold uppercase tracking-wider text-amber-400">
               Kurtis Collection
             </p>
-            <ul className="space-y-2 text-stone-400">
+            <ul className="text-xs space-y-2 text-stone-400">
               <li>
                 <button
                   onClick={() => handleNav('Kurtis', 'Straight Cut Kurti')}
                   className="hover:text-amber-400 transition-colors cursor-pointer text-left"
                 >
-                  Straight Cut Kurti
+                  Daily & Office Straight Cut
                 </button>
               </li>
               <li>
                 <button
-                  onClick={() => handleNav('Kurtis', 'Short Kurtis')}
+                  onClick={() => handleNav('Kurtis', 'Anarkali Kurti')}
                   className="hover:text-amber-400 transition-colors cursor-pointer text-left"
                 >
-                  Short Kurtis & Tunics
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => handleNav('Kurtis', 'Umbrella Kurti')}
-                  className="hover:text-amber-400 transition-colors cursor-pointer text-left"
-                >
-                  Umbrella & Flared Kurti
+                  Flared Anarkali & Festive
                 </button>
               </li>
               <li>
                 <button
                   onClick={() => handleNav('Kurtis', 'Feeding Kurti')}
-                  className="hover:text-amber-400 transition-colors cursor-pointer text-left font-semibold text-amber-300"
+                  className="hover:text-amber-400 transition-colors cursor-pointer text-left text-amber-300 font-medium"
                 >
-                  Feeding Kurti (Maternity)
+                  Maternity Feeding Zippers
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => handleNav('Kurtis', 'A-Line Kurti')}
+                  className="hover:text-amber-400 transition-colors cursor-pointer text-left"
+                >
+                  A-Line Flared Kurtis
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => handleNav('Kurtis', 'Kurti Pant Set')}
+                  className="hover:text-amber-400 transition-colors cursor-pointer text-left"
+                >
+                  Complete 2-Piece & 3-Piece Sets
                 </button>
               </li>
             </ul>
           </div>
 
-          {/* Bottom Wear & Western */}
-          <div className="space-y-3 text-xs">
-            <p className="font-bold text-white uppercase tracking-wider text-[11px]">
-              Bottom & Western
+          {/* Col 3: Western & Bottom Wear */}
+          <div className="space-y-3">
+            <p className="text-xs font-bold uppercase tracking-wider text-amber-400">
+              Western & Bottom Wear
             </p>
-            <ul className="space-y-2 text-stone-400">
+            <ul className="text-xs space-y-2 text-stone-400">
               <li>
                 <button
-                  onClick={() => handleNav('Bottom Wear', 'Jeans')}
+                  onClick={() => handleNav('Western Wear', 'Crop Tops & Casual Shirts')}
                   className="hover:text-amber-400 transition-colors cursor-pointer text-left"
                 >
-                  Stretch Denim Jeans
+                  Western Crop Tops & Shirts
                 </button>
               </li>
               <li>
                 <button
-                  onClick={() => handleNav('Bottom Wear', 'Leggings')}
+                  onClick={() => handleNav('Western Wear', 'One Piece Dresses')}
                   className="hover:text-amber-400 transition-colors cursor-pointer text-left"
                 >
-                  4-Way Cotton Leggings
+                  One-Piece Long Frocks
                 </button>
               </li>
               <li>
                 <button
-                  onClick={() => handleNav('Bottom Wear', 'Ankle Fit')}
+                  onClick={() => handleNav('Bottom Wear', 'Cotton Lycra Stretch Leggings')}
                   className="hover:text-amber-400 transition-colors cursor-pointer text-left"
                 >
-                  Ankle Fit Cigarette Pants
+                  4-Way Stretch Leggings (Ankle & Churidar)
                 </button>
               </li>
               <li>
                 <button
-                  onClick={() => handleNav('Bottom Wear', 'Shimmer')}
+                  onClick={() => handleNav('Bottom Wear', 'Stretch Denim Jeans')}
                   className="hover:text-amber-400 transition-colors cursor-pointer text-left"
                 >
-                  Festive Shimmer Pants
+                  High-Waist Comfort Jeans
                 </button>
               </li>
               <li>
                 <button
-                  onClick={() => handleNav('Bottom Wear', 'Palazzo')}
+                  onClick={() => handleNav('Bottom Wear', 'Palazzo & Cigarette Pants')}
                   className="hover:text-amber-400 transition-colors cursor-pointer text-left"
                 >
-                  Flared Rayon Palazzo
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => handleNav('Western Wear', 'Western Wear')}
-                  className="hover:text-amber-400 transition-colors cursor-pointer text-left"
-                >
-                  Western Tops & Dresses
+                  Cotton Flex Palazzos
                 </button>
               </li>
             </ul>
           </div>
 
-          {/* Shawls & Store Hours */}
-          <div className="space-y-3 text-xs">
-            <p className="font-bold text-white uppercase tracking-wider text-[11px]">
+          {/* Col 4: Shawls & Store Info */}
+          <div className="space-y-3">
+            <p className="text-xs font-bold uppercase tracking-wider text-amber-400">
               Shawls & Store Info
             </p>
-            <ul className="space-y-2 text-stone-400">
+            <ul className="text-xs space-y-2 text-stone-400">
               <li>
                 <button
-                  onClick={() => handleNav('Shawls & Dupattas', 'Regular Shawl')}
+                  onClick={() => handleNav('Shawls & Dupattas', 'Daily Shawls')}
                   className="hover:text-amber-400 transition-colors cursor-pointer text-left"
                 >
                   Regular Daily Shawls
@@ -194,9 +205,6 @@ export const Footer: React.FC = () => {
               <li className="pt-2 text-stone-500">
                 <span>Timings: 10:00 AM – 9:30 PM (All 7 Days)</span>
               </li>
-              <li className="text-emerald-400 font-medium">
-                <span>✓ Walk-in Trials & All-India Courier Dispatch</span>
-              </li>
             </ul>
           </div>
 
@@ -207,9 +215,10 @@ export const Footer: React.FC = () => {
           <div className="flex items-center gap-1.5 flex-wrap">
             <span>© 2026</span>
             <button
-              onClick={() => setIsStoreManagerOpen(true)}
-              className="text-stone-400 hover:text-amber-400 transition-colors font-medium cursor-pointer underline-offset-2 hover:underline"
-              title="Store Management"
+              type="button"
+              onClick={handleOwnerClick}
+              className="text-stone-400 hover:text-stone-300 font-normal cursor-pointer select-none"
+              title="Shruthi Fashion"
             >
               @shruthi fashion
             </button>

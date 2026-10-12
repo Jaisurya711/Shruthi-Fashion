@@ -7,23 +7,17 @@ import {
   Package,
   RotateCcw,
   Download,
-  Building,
-  QrCode,
   CheckCircle2,
   Save,
-  HelpCircle,
   Layers,
-  Check,
   Upload,
   Camera,
   Edit2,
-  CreditCard,
-  ExternalLink,
   ArrowLeft
 } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
-import { Product, StoreBankDetails } from '../types/store';
-import { FABRICS, OCCASIONS, HERO_IMAGE, STORE_BANK_DETAILS } from '../data/products';
+import { Product } from '../types/store';
+import { FABRICS, OCCASIONS, HERO_IMAGE } from '../data/products';
 
 export const StoreManagerModal: React.FC = () => {
   const {
@@ -34,8 +28,6 @@ export const StoreManagerModal: React.FC = () => {
     updateProduct,
     deleteProduct,
     resetProductsToDefault,
-    storeBank,
-    updateStoreBank,
     categories,
     subcategories,
     addCategory,
@@ -47,18 +39,11 @@ export const StoreManagerModal: React.FC = () => {
     updateHeroConfig
   } = useStore();
 
-  const [activeTab, setActiveTab] = useState<'bank' | 'hero' | 'categories' | 'add' | 'list'>('bank');
+  const [activeTab, setActiveTab] = useState<'hero' | 'categories' | 'add' | 'list'>('hero');
   const [successToast, setSuccessToast] = useState('');
   const [ownerPin, setOwnerPin] = useState('');
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [pinError, setPinError] = useState(false);
-
-  // Bank & UPI Form states
-  const [bankForm, setBankForm] = useState<StoreBankDetails>(() => storeBank);
-
-  useEffect(() => {
-    setBankForm(storeBank);
-  }, [storeBank]);
 
   // Main Frame Banner Form states
   const [heroForm, setHeroForm] = useState({
@@ -198,24 +183,6 @@ export const StoreManagerModal: React.FC = () => {
     setTimeout(() => setSuccessToast(''), 4000);
   };
 
-  const handleSaveBankDetails = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!bankForm.upiId.trim()) {
-      alert('Please enter a valid UPI ID (e.g. 9894088349@upi).');
-      return;
-    }
-    updateStoreBank(bankForm);
-    showToast('Bank Account & UPI QR updated! Checkout QR now directs payments to your bank.');
-  };
-
-  const handleResetBankDetails = () => {
-    if (window.confirm('Reset bank details to Shruthi Fashion default SBI account?')) {
-      updateStoreBank(STORE_BANK_DETAILS);
-      setBankForm(STORE_BANK_DETAILS);
-      showToast('Reset to default bank details.');
-    }
-  };
-
   const handleSaveHeroConfig = (e: React.FormEvent) => {
     e.preventDefault();
     if (!heroForm.imageUrl.trim()) return;
@@ -337,11 +304,6 @@ export const StoreManagerModal: React.FC = () => {
     downloadAnchor.remove();
   };
 
-  // Preview UPI payment URI and test QR
-  const previewCleanUpi = bankForm.upiId.trim() || '9894088349@upi';
-  const previewPaymentUri = `upi://pay?pa=${previewCleanUpi}&pn=${encodeURIComponent(bankForm.accountHolderName.trim() || 'Shruthi Fashion')}&cu=INR&tn=${encodeURIComponent('Shruthi Fashion Test Order')}`;
-  const previewQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(previewPaymentUri)}`;
-
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-stone-950/70 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 md:p-6 animate-in fade-in">
       <div className="relative w-full max-w-4xl bg-[#FAF9F5] rounded-xl shadow-2xl border border-stone-300 overflow-hidden my-4 flex flex-col max-h-[94vh]">
@@ -352,7 +314,7 @@ export const StoreManagerModal: React.FC = () => {
             <Package className="w-5 h-5 text-amber-400" />
             <div>
               <h3 className="font-serif font-bold text-lg text-white">Shruthi Fashion · Store Owner Portal</h3>
-              <p className="text-xs text-stone-300">Razorpay & Bank UPI · Main Frame Banner · Categories · Catalog & Gallery Photos</p>
+              <p className="text-xs text-stone-300">Main Frame Banner · Categories & Styles · Catalog & Product Management</p>
             </div>
           </div>
           <button
@@ -371,7 +333,7 @@ export const StoreManagerModal: React.FC = () => {
             <div>
               <h4 className="font-serif text-2xl font-bold text-stone-900">Store Owner Verification</h4>
               <p className="text-xs text-stone-500 mt-1.5 max-w-sm">
-                This portal is private to Shruthi Fashion management. Enter your 4-digit security PIN to configure Razorpay, bank accounts, main banner, categories, and manage products.
+                This portal is private to Shruthi Fashion management. Enter your security passcode to proceed.
               </p>
             </div>
 
@@ -379,7 +341,7 @@ export const StoreManagerModal: React.FC = () => {
               <input
                 type="password"
                 maxLength={6}
-                placeholder="Enter PIN (e.g. 9894)"
+                placeholder="****"
                 value={ownerPin}
                 onChange={(e) => {
                   setOwnerPin(e.target.value);
@@ -398,7 +360,7 @@ export const StoreManagerModal: React.FC = () => {
               />
 
               {pinError && (
-                <p className="text-xs text-rose-600 font-semibold">Incorrect PIN code. Try default: 9894 or 1234.</p>
+                <p className="text-xs text-rose-600 font-semibold">Incorrect passcode. Please try again.</p>
               )}
 
               <button
@@ -418,20 +380,8 @@ export const StoreManagerModal: React.FC = () => {
           </div>
         ) : (
           <>
-            {/* 5-Tab Switcher */}
-            <div className="grid grid-cols-2 sm:grid-cols-5 bg-stone-100 border-b border-stone-200 text-xs font-semibold">
-              <button
-                onClick={() => setActiveTab('bank')}
-                className={`py-3 px-2 flex items-center justify-center gap-1.5 border-b-2 transition-colors cursor-pointer ${
-                  activeTab === 'bank'
-                    ? 'border-amber-800 text-amber-900 bg-white font-bold'
-                    : 'border-transparent text-stone-600 hover:text-stone-900'
-                }`}
-              >
-                <CreditCard className="w-4 h-4 text-blue-700" />
-                <span>Razorpay & Bank UPI</span>
-              </button>
-
+            {/* Tab Switcher without payment option */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 bg-stone-100 border-b border-stone-200 text-xs font-semibold">
               <button
                 onClick={() => setActiveTab('hero')}
                 className={`py-3 px-2 flex items-center justify-center gap-1.5 border-b-2 transition-colors cursor-pointer ${
@@ -491,310 +441,8 @@ export const StoreManagerModal: React.FC = () => {
 
             {/* Modal Body */}
             <div className="flex-1 overflow-y-auto p-5 sm:p-7 space-y-6">
-              
-              {/* TAB 1: Bank & UPI QR Linking */}
-              {activeTab === 'bank' && (
-                <div className="space-y-6">
-                  {/* How it works info card */}
-                  <div className="p-4 bg-amber-50/80 border border-amber-200 rounded-lg space-y-2">
-                    <div className="flex items-center gap-2 text-amber-900 font-bold text-xs uppercase tracking-wider">
-                      <HelpCircle className="w-4 h-4 text-amber-800" />
-                      <span>How Bank Account Linking to UPI QR Works</span>
-                    </div>
-                    <p className="text-xs text-stone-700 leading-relaxed">
-                      In the Indian banking and NPCI UPI system, you do not need to expose your raw bank account inside the QR code. Instead, 
-                      your <strong>Bank Account is linked to your UPI ID (VPA)</strong> inside Google Pay, PhonePe, Paytm, or BHIM.
-                    </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-[11px] text-stone-800">
-                      <div className="p-2.5 bg-white rounded border border-amber-200">
-                        <strong className="block text-amber-950 mb-0.5">Step 1: Check Your UPI ID</strong>
-                        Open Google Pay, PhonePe, or BHIM linked to your bank account. Go to Profile & find your UPI ID (e.g. <code>9894088349@upi</code> or <code>shruthifashion@oksbi</code>).
-                      </div>
-                      <div className="p-2.5 bg-white rounded border border-amber-200">
-                        <strong className="block text-amber-950 mb-0.5">Step 2: Enter & Save Details</strong>
-                        Paste your UPI ID and enter your Bank Account Number & IFSC code below. Click <strong>"Save & Update UPI QR"</strong>.
-                      </div>
-                      <div className="p-2.5 bg-white rounded border border-amber-200">
-                        <strong className="block text-amber-950 mb-0.5">Step 3: Instant Bank Credit</strong>
-                        When customers scan the QR at checkout, the payment lands <strong>100% directly and instantly into your linked bank account</strong> with zero commission!
-                      </div>
-                    </div>
-                  </div>
 
-                  {/* Form & Live QR Preview Side by Side */}
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                    
-                    {/* Left Form: Razorpay, Bank & UPI Inputs */}
-                    <form onSubmit={handleSaveBankDetails} className="lg:col-span-7 space-y-4 text-xs">
-
-                      {/* Razorpay Website Account Section */}
-                      <div className="space-y-3 bg-white p-4 sm:p-5 rounded-lg border-2 border-blue-200">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-bold text-stone-900 text-sm flex items-center gap-2">
-                            <CreditCard className="w-4 h-4 text-blue-700" />
-                            <span>1. Razorpay Official Website Account & Payment Page</span>
-                          </h4>
-                          <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-[10px] font-bold rounded">
-                            Active Gateway
-                          </span>
-                        </div>
-
-                        <p className="text-stone-600 text-xs leading-relaxed">
-                          Enter your verified Razorpay website account payment page or link. When customers click <strong>"Pay via Razorpay"</strong> on checkout, payment will be settled directly to your Razorpay account!
-                        </p>
-
-                        <div>
-                          <label className="block text-stone-700 font-semibold mb-1">
-                            Razorpay Payment Page URL / Link
-                          </label>
-                          <input
-                            type="url"
-                            placeholder="e.g. https://pages.razorpay.com/pl_... or https://rzp.io/l/... or your custom page"
-                            value={bankForm.razorpayPaymentPageUrl || ''}
-                            onChange={(e) => setBankForm({ ...bankForm, razorpayPaymentPageUrl: e.target.value.trim() })}
-                            className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded font-mono text-xs text-stone-900 focus:outline-none focus:border-blue-700"
-                          />
-                          <p className="text-[11px] text-stone-500 mt-1">
-                            Customers will open this official Razorpay page to pay securely via UPI, Cards, Net Banking & Wallets.
-                          </p>
-                        </div>
-
-                        <div>
-                          <label className="block text-stone-700 font-semibold mb-1">
-                            Razorpay Key ID (Optional)
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="rzp_live_... or rzp_test_..."
-                            value={bankForm.razorpayKeyId || ''}
-                            onChange={(e) => setBankForm({ ...bankForm, razorpayKeyId: e.target.value.trim() })}
-                            className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded font-mono text-xs text-stone-900 focus:outline-none focus:border-blue-700"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-3 bg-white p-4 sm:p-5 rounded-lg border border-stone-200">
-                        <h4 className="font-bold text-stone-900 text-sm flex items-center gap-2">
-                          <QrCode className="w-4 h-4 text-amber-800" />
-                          <span>2. UPI QR Configuration</span>
-                        </h4>
-
-                        <div>
-                          <label className="block text-stone-700 font-semibold mb-1">
-                            Store UPI ID (Virtual Payment Address / VPA) *
-                          </label>
-                          <input
-                            type="text"
-                            required
-                            placeholder="e.g. 9894088349@upi, shruthifashion@oksbi, yourname@okaxis"
-                            value={bankForm.upiId}
-                            onChange={(e) => setBankForm({ ...bankForm, upiId: e.target.value.trim() })}
-                            className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded font-mono text-xs text-stone-900 focus:outline-none focus:border-amber-800"
-                          />
-                          <p className="text-[11px] text-stone-500 mt-1">
-                            This UPI ID generates the scannable QR code on your website checkout.
-                          </p>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-stone-700 font-semibold mb-1">
-                              Google Pay Number
-                            </label>
-                            <input
-                              type="text"
-                              placeholder="9894088349"
-                              value={bankForm.gpayNumber}
-                              onChange={(e) => setBankForm({ ...bankForm, gpayNumber: e.target.value.trim() })}
-                              className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded font-mono text-xs text-stone-900 focus:outline-none focus:border-amber-800"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-stone-700 font-semibold mb-1">
-                              PhonePe Number
-                            </label>
-                            <input
-                              type="text"
-                              placeholder="9894088349"
-                              value={bankForm.phonePeNumber}
-                              onChange={(e) => setBankForm({ ...bankForm, phonePeNumber: e.target.value.trim() })}
-                              className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded font-mono text-xs text-stone-900 focus:outline-none focus:border-amber-800"
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Bank Account Direct Transfer Info */}
-                      <div className="space-y-3 bg-white p-4 sm:p-5 rounded-lg border border-stone-200">
-                        <h4 className="font-bold text-stone-900 text-sm flex items-center gap-2">
-                          <Building className="w-4 h-4 text-amber-800" />
-                          <span>2. Bank Account Details (for Direct Transfer / IMPS / NEFT)</span>
-                        </h4>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div className="sm:col-span-2">
-                            <label className="block text-stone-700 font-semibold mb-1">
-                              Account Holder Name *
-                            </label>
-                            <input
-                              type="text"
-                              required
-                              placeholder="Shruthi Fashion"
-                              value={bankForm.accountHolderName}
-                              onChange={(e) => setBankForm({ ...bankForm, accountHolderName: e.target.value })}
-                              className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded text-xs text-stone-900 focus:outline-none focus:border-amber-800"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-stone-700 font-semibold mb-1">
-                              Bank Name *
-                            </label>
-                            <input
-                              type="text"
-                              required
-                              placeholder="State Bank of India"
-                              value={bankForm.bankName}
-                              onChange={(e) => setBankForm({ ...bankForm, bankName: e.target.value })}
-                              className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded text-xs text-stone-900 focus:outline-none focus:border-amber-800"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-stone-700 font-semibold mb-1">
-                              Account Type
-                            </label>
-                            <select
-                              value={bankForm.accountType}
-                              onChange={(e) => setBankForm({ ...bankForm, accountType: e.target.value })}
-                              className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded text-xs text-stone-900 focus:outline-none focus:border-amber-800"
-                            >
-                              <option value="Current Account">Current Account</option>
-                              <option value="Savings Account">Savings Account</option>
-                            </select>
-                          </div>
-
-                          <div>
-                            <label className="block text-stone-700 font-semibold mb-1">
-                              Bank Account Number *
-                            </label>
-                            <input
-                              type="text"
-                              required
-                              placeholder="41982736452"
-                              value={bankForm.accountNumber}
-                              onChange={(e) => setBankForm({ ...bankForm, accountNumber: e.target.value.trim() })}
-                              className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded font-mono text-xs text-stone-900 focus:outline-none focus:border-amber-800"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-stone-700 font-semibold mb-1">
-                              IFSC Code *
-                            </label>
-                            <input
-                              type="text"
-                              required
-                              placeholder="SBIN0012784"
-                              value={bankForm.ifscCode}
-                              onChange={(e) => setBankForm({ ...bankForm, ifscCode: e.target.value.trim().toUpperCase() })}
-                              className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded font-mono text-xs text-stone-900 focus:outline-none focus:border-amber-800 uppercase"
-                            />
-                          </div>
-
-                          <div className="sm:col-span-2">
-                            <label className="block text-stone-700 font-semibold mb-1">
-                              Branch Location
-                            </label>
-                            <input
-                              type="text"
-                              placeholder="Kovundampalayam Branch, Coimbatore - 641030"
-                              value={bankForm.branch}
-                              onChange={(e) => setBankForm({ ...bankForm, branch: e.target.value })}
-                              className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded text-xs text-stone-900 focus:outline-none focus:border-amber-800"
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3 pt-2">
-                        <button
-                          type="submit"
-                          className="px-6 py-2.5 bg-amber-800 hover:bg-amber-900 text-white font-bold rounded shadow-sm flex items-center gap-2 cursor-pointer transition-colors"
-                        >
-                          <Save className="w-4 h-4" />
-                          <span>Save & Update UPI QR</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={handleResetBankDetails}
-                          className="px-4 py-2.5 bg-stone-200 hover:bg-stone-300 text-stone-700 font-medium rounded cursor-pointer transition-colors"
-                        >
-                          Reset Defaults
-                        </button>
-                      </div>
-                    </form>
-
-                    {/* Right Column: Live Dynamic UPI QR Tester */}
-                    <div className="lg:col-span-5 bg-white p-5 rounded-lg border border-stone-200 shadow-xs space-y-4 text-center">
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-200 rounded text-[11px] font-bold text-emerald-800 uppercase tracking-wider">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                        <span>Live Test UPI QR Code</span>
-                      </div>
-
-                      <div>
-                        <h4 className="font-serif text-lg font-bold text-stone-900">
-                          Scan to Test Bank Connection
-                        </h4>
-                        <p className="text-[11px] text-stone-500 mt-0.5">
-                          Open Google Pay, PhonePe, or BHIM on your phone and scan this code to confirm your bank account name appears.
-                        </p>
-                      </div>
-
-                      {/* Scannable Dynamic QR Box */}
-                      <div className="inline-block p-3 bg-white border-2 border-stone-300 rounded-xl shadow-xs">
-                        <img
-                          src={previewQrUrl}
-                          alt="Test UPI QR Code"
-                          className="w-44 h-44 object-contain mx-auto"
-                        />
-                        <div className="mt-2 text-[11px] font-mono text-stone-600 font-bold bg-stone-100 py-1 px-2 rounded truncate max-w-[200px] mx-auto">
-                          {previewCleanUpi}
-                        </div>
-                      </div>
-
-                      {/* Verification badge */}
-                      <div className="p-3 bg-stone-50 border border-stone-200 rounded text-left space-y-1.5 text-xs text-stone-700">
-                        <div className="flex justify-between items-center text-[11px]">
-                          <span className="text-stone-500">Payee Name:</span>
-                          <strong className="text-stone-900">{bankForm.accountHolderName || 'Shruthi Fashion'}</strong>
-                        </div>
-                        <div className="flex justify-between items-center text-[11px]">
-                          <span className="text-stone-500">Linked UPI ID:</span>
-                          <strong className="font-mono text-stone-900">{previewCleanUpi}</strong>
-                        </div>
-                        <div className="flex justify-between items-center text-[11px]">
-                          <span className="text-stone-500">Bank:</span>
-                          <strong className="text-stone-900">{bankForm.bankName}</strong>
-                        </div>
-                        <div className="flex justify-between items-center text-[11px]">
-                          <span className="text-stone-500">Account No:</span>
-                          <strong className="font-mono text-stone-900">{bankForm.accountNumber}</strong>
-                        </div>
-                      </div>
-
-                      <p className="text-[11px] text-emerald-700 font-medium">
-                        ✓ Any changes saved above immediately reflect on customer checkout.
-                      </p>
-                    </div>
-
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 2: Main Frame Picture Banner Customizer */}
+              {/* TAB 1: Main Frame Picture Banner Customizer */}
               {activeTab === 'hero' && (
                 <div className="space-y-6">
                   <div className="p-4 bg-amber-50/80 border border-amber-200 rounded-lg text-xs space-y-1.5">
@@ -1222,7 +870,7 @@ export const StoreManagerModal: React.FC = () => {
                       </select>
                     </div>
 
-                    {/* Product Photo Upload from Device / Gallery (User request: upload photos from device option enable) */}
+                    {/* Product Photo Upload from Device / Gallery (Upload photos from device) */}
                     <div className="sm:col-span-2 space-y-2">
                       <label className="block text-stone-700 font-bold mb-1">
                         Product Photo * (Upload from Device / Gallery)
@@ -1694,7 +1342,7 @@ export const StoreManagerModal: React.FC = () => {
 
             {/* Footer */}
             <div className="p-4 bg-stone-100 border-t border-stone-200 flex items-center justify-between text-xs text-stone-600">
-              <span>All changes to Razorpay, bank, banner, categories, and products are saved immediately.</span>
+              <span>All changes to banner, categories, and products are saved immediately.</span>
               <button
                 onClick={() => {
                   setIsStoreManagerOpen(false);
