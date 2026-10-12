@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import Razorpay from 'razorpay';
 
 export default async function handler(req: any, res: any) {
@@ -17,9 +18,8 @@ export default async function handler(req: any, res: any) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Uses your live credentials directly or from Vercel environment variables
-  const key_id = (process.env.RAZORPAY_KEY_ID || 'rzp_live_TmcCNE03TUNIYQ').trim();
-  const key_secret = (process.env.RAZORPAY_KEY_SECRET || 'aPcQhngZB5nJ9Khu7nbUzyCL').trim();
+  const key_id = (process.env.RAZORPAY_KEY_ID || 'rzp_test_Tmzltbt8uaWUPE').trim();
+  const key_secret = (process.env.RAZORPAY_KEY_SECRET || 'h2OiBJcNsTNUIWh9Uj0073Y0').trim();
 
   try {
     const { amount, currency = 'INR', receipt, customKeyId, customKeySecret, simulate } = req.body || {};
@@ -79,6 +79,23 @@ export default async function handler(req: any, res: any) {
       });
     } catch (razorpayErr: any) {
       const errMsg = razorpayErr?.error?.description || razorpayErr?.message || '';
+      const errCode = razorpayErr?.error?.code || '';
+      const statusCode = razorpayErr?.statusCode;
+
+      const isAuthFailure =
+        statusCode === 401 ||
+        (errCode === 'BAD_REQUEST_ERROR' && (errMsg.toLowerCase().includes('authentication') || !errMsg)) ||
+        errMsg.toLowerCase().includes('authentication failed');
+
+      if (isAuthFailure) {
+        return res.status(401).json({
+          error: 'Authentication failed',
+          description: 'Invalid or expired Razorpay Key ID or Secret',
+          code: 'BAD_REQUEST_ERROR',
+          key_id: activeKeyId,
+        });
+      }
+
       return res.status(500).json({
         error: errMsg || 'Failed to create Razorpay order',
       });
