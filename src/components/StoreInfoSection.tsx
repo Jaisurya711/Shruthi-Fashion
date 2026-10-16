@@ -10,9 +10,9 @@ export const StoreInfoSection: React.FC = () => {
         {/* Section Header */}
         <div className="max-w-3xl">
           <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-800">
-            <span>Boutique Walk-In & Live Trials</span>
+            <span></span>
             <span aria-hidden="true">·</span>
-            <span>Kovundampalayam, Coimbatore</span>
+            <span></span>
           </div>
           <h2 className="text-3xl sm:text-4xl font-serif font-black text-amber-950 mt-1">
             Visit Shruthi Fashion Store

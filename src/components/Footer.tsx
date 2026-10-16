@@ -42,7 +42,16 @@ export const Footer: React.FC = () => {
             </div>
             
             <p className="text-xs text-stone-400 leading-relaxed max-w-sm">
-              Your neighborhood fashion destination. Specializing in daily & festive kurtis, maternity feeding kurtis, western wear, comfort stretch jeans, leggings, and grand bridal shawls.
+              Welcome to Shruthi Fashion! Since 2018, we have been helping you look stylish with trendy and affordable fashion collections. Discover a wide range of kurtis, salwar sets, coord sets, nightwear, western wear, jeans, leggings, and more.
+              We are committed to bringing you the latest fashion trends, quality products, and affordable prices for every occasion.
+              
+              Our Store Locations
+
+              Branch 1 – TVS Nagar
+              TVS Nagar, Coimbatore, Tamil Nadu – 641025
+
+              Branch 2 – Koundampalayam
+              Koundampalayam, Coimbatore, Tamil Nadu – 641030
             </p>
 
             <div className="text-xs text-stone-400 space-y-1.5 pt-1">
@@ -221,7 +230,7 @@ export const Footer: React.FC = () => {
             >
               @shruthi fashion
             </button>
-            <span>· All rights reserved. Edayarpalayam Road - 641030.</span>
+            <span>· All rights reserved. Websoft Developer.</span>
           </div>
 
           <div className="flex items-center gap-4">

@@ -45,8 +45,8 @@ export const Navbar: React.FC = () => {
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-stone-300 text-[11px] sm:text-xs">
             <span className="text-amber-400 font-bold">Shruthi Fashion</span>
-            <span aria-hidden="true">·</span>
-            <span className="hidden sm:inline">Kovundampalayam, Coimbatore</span>
+            <span aria-hidden="true"></span>
+            <span className="hidden sm:inline"> Trending Collections</span>
           </div>
 
           <div className="flex items-center gap-3 text-stone-300 text-[11px] sm:text-xs">
@@ -81,9 +81,6 @@ export const Navbar: React.FC = () => {
             <div className="flex items-center gap-2">
               <span className="text-2xl sm:text-3xl md:text-4xl font-serif font-black tracking-tight text-amber-900 group-hover:text-amber-950 transition-colors drop-shadow-2xs">
                 Shruthi Fashion
-              </span>
-              <span className="hidden sm:inline-block bg-amber-800 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded shadow-2xs">
-                Kovundampalayam
               </span>
             </div>
             <span className="text-[10px] sm:text-[11px] font-medium text-stone-600 tracking-wider uppercase -mt-0.5">
