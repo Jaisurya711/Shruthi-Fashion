@@ -17,6 +17,14 @@ interface StoreContextType {
   isAccountOpen: boolean;
   isCheckoutOpen: boolean;
   orderSuccess: UserOrder | null;
+  allOrders: UserOrder[];
+  updateOrderStatus: (
+    orderId: string,
+    status: UserOrder['deliveryStatus'],
+    courierPartner?: string,
+    trackingNumber?: string
+  ) => void;
+  deleteOrder: (orderId: string) => void;
   cartCount: number;
   cartSubtotal: number;
   freeShippingThreshold: number;
@@ -162,6 +170,167 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isStoreManagerOpen, setIsStoreManagerOpen] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState<UserOrder | null>(null);
+  const [allOrders, setAllOrders] = useState<UserOrder[]>(() => {
+    try {
+      const saved = localStorage.getItem('shruthi_fashion_all_orders');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return [
+      {
+        id: 'ord-demo-1',
+        orderNumber: 'SF-2026-8419',
+        date: '2026-10-16',
+        items: [
+          {
+            id: 'cart-demo-1',
+            product: normalizeProduct({
+              title: 'Coimbatore Soft Cotton Saree - Maroon & Zari Border',
+              category: 'Daily Wear',
+              fabric: 'Pure Cotton',
+              price: 1499
+            }),
+            selectedSize: 'Free Size',
+            selectedColor: 'Deep Maroon',
+            quantity: 1
+          }
+        ],
+        subtotal: 1499,
+        discount: 0,
+        shippingFee: 80,
+        total: 1579,
+        address: {
+          id: 'addr-demo-1',
+          fullName: 'K. Revathi',
+          phone: '9842155678',
+          street: 'Door No. 24, Thadagam Main Road',
+          area: 'Near DB Road Corner, RS Puram',
+          city: 'Coimbatore',
+          pincode: '641002',
+          state: 'Tamil Nadu'
+        },
+        paymentMethod: 'Razorpay',
+        paymentDetails: { razorpayPaymentId: 'pay_rzp_cbe_8419' },
+        deliveryStatus: 'Processing',
+        courierPartner: 'ST Courier',
+        trackingNumber: 'STC-CBE-641002-8419',
+        estimatedDelivery: '2 Business Days'
+      },
+      {
+        id: 'ord-demo-2',
+        orderNumber: 'SF-2026-6204',
+        date: '2026-10-15',
+        items: [
+          {
+            id: 'cart-demo-2',
+            product: normalizeProduct({
+              title: 'Tussar Silk Festive Kurti with Zari Neck',
+              category: 'Kurtis',
+              fabric: 'Tussar Silk',
+              price: 899
+            }),
+            selectedSize: 'L',
+            selectedColor: 'Emerald Green',
+            quantity: 2
+          }
+        ],
+        subtotal: 1798,
+        discount: 0,
+        shippingFee: 80,
+        total: 1878,
+        address: {
+          id: 'addr-demo-2',
+          fullName: 'Deepa Sundararajan',
+          phone: '9443210987',
+          street: 'Flat 3B, Green Meadows, Trichy Road',
+          area: 'Near Singanallur Signal',
+          city: 'Coimbatore',
+          pincode: '641005',
+          state: 'Tamil Nadu'
+        },
+        paymentMethod: 'UPI',
+        paymentDetails: { upiId: 'deepa@okaxis', utrNumber: 'UPI429018449102' },
+        deliveryStatus: 'Dispatched from Coimbatore',
+        courierPartner: 'Professional Couriers',
+        trackingNumber: 'TPC-CBE-99238411',
+        estimatedDelivery: '3 Business Days'
+      },
+      {
+        id: 'ord-demo-3',
+        orderNumber: 'SF-2026-3112',
+        date: '2026-10-14',
+        items: [
+          {
+            id: 'cart-demo-3',
+            product: normalizeProduct({
+              title: 'Grand Zari Silk Shawl - Temple Border',
+              category: 'Grand Shawls',
+              fabric: 'Art Silk',
+              price: 899
+            }),
+            selectedSize: 'Standard',
+            selectedColor: 'Temple Gold',
+            quantity: 1
+          }
+        ],
+        subtotal: 899,
+        discount: 0,
+        shippingFee: 80,
+        total: 979,
+        address: {
+          id: 'addr-demo-3',
+          fullName: 'Ananya Vijay',
+          phone: '9790044521',
+          street: '12/4 Annanagar East, Avinashi Road',
+          area: 'Opposite PSG Tech, Peelamedu',
+          city: 'Coimbatore',
+          pincode: '641004',
+          state: 'Tamil Nadu'
+        },
+        paymentMethod: 'Razorpay',
+        paymentDetails: { razorpayPaymentId: 'pay_rzp_cbe_3112' },
+        deliveryStatus: 'Delivered',
+        courierPartner: 'DTDC Express',
+        trackingNumber: 'DTDC-CBE-3112',
+        estimatedDelivery: 'Delivered'
+      }
+    ];
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('shruthi_fashion_all_orders', JSON.stringify(allOrders));
+    } catch (e) {
+      console.warn('Failed saving orders to localStorage:', e);
+    }
+  }, [allOrders]);
+
+  const updateOrderStatus = (
+    orderId: string,
+    status: UserOrder['deliveryStatus'],
+    courierPartner?: string,
+    trackingNumber?: string
+  ) => {
+    setAllOrders(prev =>
+      prev.map(ord => {
+        if (ord.id === orderId || ord.orderNumber === orderId) {
+          return {
+            ...ord,
+            deliveryStatus: status,
+            courierPartner: courierPartner !== undefined ? courierPartner : ord.courierPartner,
+            trackingNumber: trackingNumber !== undefined ? trackingNumber : ord.trackingNumber
+          };
+        }
+        return ord;
+      })
+    );
+  };
+
+  const deleteOrder = (orderId: string) => {
+    setAllOrders(prev => prev.filter(ord => ord.id !== orderId && ord.orderNumber !== orderId));
+  };
   const [pendingCheckoutAfterAuth, setPendingCheckoutAfterAuth] = useState(false);
   const [storeBank, setStoreBank] = useState<StoreBankDetails>(() => getStoreBankDetails());
 
@@ -313,7 +482,24 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [user, setUser] = useState<UserProfile | null>(() => {
     try {
       const saved = localStorage.getItem('shruthi_fashion_user');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed: UserProfile = JSON.parse(saved);
+        // Remove legacy sample dummy addresses (e.g. Cross Cut Road / Gandhipuram)
+        if (parsed.addresses && Array.isArray(parsed.addresses)) {
+          parsed.addresses = parsed.addresses.filter(a => {
+            const streetLower = (a.street || '').toLowerCase();
+            const areaLower = (a.area || '').toLowerCase();
+            const isDummy =
+              streetLower.includes('cross cut') ||
+              areaLower.includes('gandhipuram') ||
+              streetLower.includes('balaji textiles') ||
+              areaLower.includes('r.s. puram') ||
+              a.pincode === '641012';
+            return !isDummy;
+          });
+        }
+        return parsed;
+      }
       return null;
     } catch {
       return null;
@@ -448,7 +634,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // User auth operations
   const login = (name: string, phone: string, email?: string) => {
     const finalName = name.trim() || 'Customer';
-    const finalPhone = phone.trim() || '+91 99622 78349';
+    const finalPhone = phone.trim() || '';
     const finalEmail = email?.trim() || '';
 
     const newUser: UserProfile = {
@@ -456,19 +642,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       name: finalName,
       email: finalEmail,
       phone: finalPhone,
-      addresses: [
-        {
-          id: `addr-${Date.now()}`,
-          fullName: finalName,
-          phone: finalPhone,
-          street: 'Cross Cut Road',
-          area: 'Gandhipuram',
-          city: 'Coimbatore',
-          pincode: '641012',
-          state: 'Tamil Nadu',
-          isDefault: true
-        }
-      ],
+      addresses: [],
       orderHistory: [],
       wishlistIds: wishlist
     };
@@ -536,6 +710,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         orderHistory: [newOrder, ...user.orderHistory]
       });
     }
+
+    setAllOrders(prev => [newOrder, ...prev]);
 
     clearCart();
     setIsCheckoutOpen(false);
@@ -675,6 +851,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setIsAccountOpen,
         setIsCheckoutOpen,
         setOrderSuccess,
+        allOrders,
+        updateOrderStatus,
+        deleteOrder,
         pendingCheckoutAfterAuth,
         setPendingCheckoutAfterAuth,
         isStoreManagerOpen,

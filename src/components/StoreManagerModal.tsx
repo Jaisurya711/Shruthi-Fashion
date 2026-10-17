@@ -13,11 +13,25 @@ import {
   Upload,
   Camera,
   Edit2,
-  ArrowLeft
+  ArrowLeft,
+  Truck,
+  Printer,
+  FileText,
+  Tag,
+  MessageCircle,
+  Search,
+  ExternalLink,
+  Phone,
+  MapPin,
+  Clock,
+  Filter,
+  Check
 } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
-import { Product } from '../types/store';
+import { Product, UserOrder } from '../types/store';
 import { FABRICS, OCCASIONS, HERO_IMAGE } from '../data/products';
+import { OrderPrintModal } from './OrderPrintModal';
+import { getCustomerWhatsAppOrderUrl } from '../services/notificationService';
 
 export const StoreManagerModal: React.FC = () => {
   const {
@@ -36,14 +50,26 @@ export const StoreManagerModal: React.FC = () => {
     removeSubcategory,
     resetCategoriesToDefault,
     heroConfig,
-    updateHeroConfig
+    updateHeroConfig,
+    allOrders,
+    updateOrderStatus,
+    deleteOrder
   } = useStore();
 
-  const [activeTab, setActiveTab] = useState<'hero' | 'categories' | 'add' | 'list'>('hero');
+  const [activeTab, setActiveTab] = useState<'orders' | 'hero' | 'categories' | 'add' | 'list'>('orders');
   const [successToast, setSuccessToast] = useState('');
   const [ownerPin, setOwnerPin] = useState('');
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [pinError, setPinError] = useState(false);
+
+  // Order Management States
+  const [orderSearch, setOrderSearch] = useState('');
+  const [orderStatusFilter, setOrderStatusFilter] = useState<string>('all');
+  const [printModalOrder, setPrintModalOrder] = useState<{ order: UserOrder; view: 'invoice' | 'courier_label' } | null>(null);
+  const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
+  const [editCourierPartner, setEditCourierPartner] = useState('');
+  const [editTrackingNo, setEditTrackingNo] = useState('');
+  const [editStatus, setEditStatus] = useState<UserOrder['deliveryStatus']>('Order Placed');
 
   // Main Frame Banner Form states
   const [heroForm, setHeroForm] = useState({
@@ -380,8 +406,25 @@ export const StoreManagerModal: React.FC = () => {
           </div>
         ) : (
           <>
-            {/* Tab Switcher without payment option */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 bg-stone-100 border-b border-stone-200 text-xs font-semibold">
+            {/* Tab Switcher */}
+            <div className="grid grid-cols-2 sm:grid-cols-5 bg-stone-100 border-b border-stone-200 text-xs font-semibold">
+              <button
+                onClick={() => setActiveTab('orders')}
+                className={`py-3 px-2 flex items-center justify-center gap-1.5 border-b-2 transition-colors cursor-pointer ${
+                  activeTab === 'orders'
+                    ? 'border-amber-800 text-amber-900 bg-white font-bold'
+                    : 'border-transparent text-stone-600 hover:text-stone-900'
+                }`}
+              >
+                <Truck className="w-4 h-4 text-amber-800" />
+                <span className="flex items-center gap-1">
+                  <span>Orders &amp; Dispatch</span>
+                  <span className="px-1.5 py-0.2 bg-amber-800 text-white text-[10px] rounded-full font-mono">
+                    {allOrders.length}
+                  </span>
+                </span>
+              </button>
+
               <button
                 onClick={() => setActiveTab('hero')}
                 className={`py-3 px-2 flex items-center justify-center gap-1.5 border-b-2 transition-colors cursor-pointer ${
@@ -403,7 +446,7 @@ export const StoreManagerModal: React.FC = () => {
                 }`}
               >
                 <Layers className="w-4 h-4 text-amber-800" />
-                <span>Categories & Styles</span>
+                <span>Categories &amp; Styles</span>
               </button>
 
               <button
@@ -427,7 +470,7 @@ export const StoreManagerModal: React.FC = () => {
                 }`}
               >
                 <Package className="w-4 h-4 text-amber-800" />
-                <span>Catalog & Products ({products.length})</span>
+                <span>Catalog ({products.length})</span>
               </button>
             </div>
 
@@ -440,7 +483,415 @@ export const StoreManagerModal: React.FC = () => {
             )}
 
             {/* Modal Body */}
-            <div className="flex-1 overflow-y-auto p-5 sm:p-7 space-y-6">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+
+              {/* TAB 0: ORDER MANAGEMENT & COURIER DISPATCH */}
+              {activeTab === 'orders' && (
+                <div className="space-y-6">
+                  {/* Top Intro & Statistics */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                    <div className="p-3.5 bg-white border border-stone-200 rounded-lg shadow-2xs">
+                      <p className="text-[11px] font-semibold text-stone-500 uppercase tracking-wider">
+                        Total Placed Orders
+                      </p>
+                      <p className="text-xl font-black text-stone-900 font-mono mt-1">
+                        {allOrders.length}
+                      </p>
+                      <span className="text-[10px] text-stone-400">All customer orders</span>
+                    </div>
+
+                    <div className="p-3.5 bg-white border border-stone-200 rounded-lg shadow-2xs">
+                      <p className="text-[11px] font-semibold text-stone-500 uppercase tracking-wider">
+                        Total Revenue
+                      </p>
+                      <p className="text-xl font-black text-amber-900 font-mono mt-1">
+                        ₹{allOrders.reduce((sum, o) => sum + o.total, 0).toLocaleString('en-IN')}
+                      </p>
+                      <span className="text-[10px] text-stone-400">Including shipping fee</span>
+                    </div>
+
+                    <div className="p-3.5 bg-white border border-stone-200 rounded-lg shadow-2xs">
+                      <p className="text-[11px] font-semibold text-stone-500 uppercase tracking-wider">
+                        Processing / Weaving
+                      </p>
+                      <p className="text-xl font-black text-blue-700 font-mono mt-1">
+                        {allOrders.filter(o => o.deliveryStatus === 'Processing' || o.deliveryStatus === 'Order Placed' || o.deliveryStatus === 'Weaving & Tailoring').length}
+                      </p>
+                      <span className="text-[10px] text-stone-400">Packing &amp; QC stage</span>
+                    </div>
+
+                    <div className="p-3.5 bg-white border border-stone-200 rounded-lg shadow-2xs">
+                      <p className="text-[11px] font-semibold text-stone-500 uppercase tracking-wider">
+                        Dispatched / Delivered
+                      </p>
+                      <p className="text-xl font-black text-emerald-700 font-mono mt-1">
+                        {allOrders.filter(o => o.deliveryStatus === 'Dispatched from Coimbatore' || o.deliveryStatus === 'Out for Delivery' || o.deliveryStatus === 'Delivered').length}
+                      </p>
+                      <span className="text-[10px] text-stone-400">Couriers in transit</span>
+                    </div>
+                  </div>
+
+                  {/* Search and Filters Bar */}
+                  <div className="bg-white p-4 rounded-xl border border-stone-200 shadow-2xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 text-xs">
+                    {/* Search Input */}
+                    <div className="relative flex-1">
+                      <Search className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        placeholder="Search by Order #, Customer Name, Phone, PIN code, or City..."
+                        value={orderSearch}
+                        onChange={(e) => setOrderSearch(e.target.value)}
+                        className="w-full pl-9 pr-8 py-2 bg-stone-50 border border-stone-300 rounded-md text-stone-900 focus:outline-none focus:border-amber-800 text-xs"
+                      />
+                      {orderSearch && (
+                        <button
+                          type="button"
+                          onClick={() => setOrderSearch('')}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 cursor-pointer"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Status Filter */}
+                    <div className="flex items-center gap-1.5 shrink-0 overflow-x-auto pb-1 sm:pb-0">
+                      <span className="text-stone-500 font-medium text-[11px] shrink-0">Status:</span>
+                      {[
+                        { label: 'All', value: 'all' },
+                        { label: 'Processing', value: 'Processing' },
+                        { label: 'Dispatched', value: 'Dispatched from Coimbatore' },
+                        { label: 'Out for Delivery', value: 'Out for Delivery' },
+                        { label: 'Delivered', value: 'Delivered' }
+                      ].map((tab) => (
+                        <button
+                          key={tab.value}
+                          type="button"
+                          onClick={() => setOrderStatusFilter(tab.value)}
+                          className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors cursor-pointer shrink-0 ${
+                            orderStatusFilter === tab.value
+                              ? 'bg-amber-800 text-white'
+                              : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                          }`}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Orders Listing */}
+                  {allOrders.filter(order => {
+                    if (orderStatusFilter !== 'all' && order.deliveryStatus !== orderStatusFilter) {
+                      return false;
+                    }
+                    if (orderSearch.trim()) {
+                      const q = orderSearch.toLowerCase().trim();
+                      const matchName = order.address?.fullName?.toLowerCase().includes(q);
+                      const matchPhone = order.address?.phone?.includes(q);
+                      const matchNum = order.orderNumber?.toLowerCase().includes(q);
+                      const matchCity = order.address?.city?.toLowerCase().includes(q);
+                      const matchArea = order.address?.area?.toLowerCase().includes(q);
+                      const matchPin = order.address?.pincode?.includes(q);
+                      const matchTracking = order.trackingNumber?.toLowerCase().includes(q);
+                      return matchName || matchPhone || matchNum || matchCity || matchArea || matchPin || matchTracking;
+                    }
+                    return true;
+                  }).length === 0 ? (
+                    <div className="text-center py-12 bg-white rounded-xl border border-stone-200 text-stone-500 space-y-2">
+                      <Truck className="w-10 h-10 text-stone-300 mx-auto stroke-[1.5]" />
+                      <p className="font-semibold text-stone-700 text-sm">No Orders Found</p>
+                      <p className="text-xs text-stone-400">
+                        {orderSearch ? 'Try a different search keyword.' : 'Customer orders will appear here automatically when placed.'}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {allOrders
+                        .filter(order => {
+                          if (orderStatusFilter !== 'all' && order.deliveryStatus !== orderStatusFilter) {
+                            return false;
+                          }
+                          if (orderSearch.trim()) {
+                            const q = orderSearch.toLowerCase().trim();
+                            const matchName = order.address?.fullName?.toLowerCase().includes(q);
+                            const matchPhone = order.address?.phone?.includes(q);
+                            const matchNum = order.orderNumber?.toLowerCase().includes(q);
+                            const matchCity = order.address?.city?.toLowerCase().includes(q);
+                            const matchArea = order.address?.area?.toLowerCase().includes(q);
+                            const matchPin = order.address?.pincode?.includes(q);
+                            const matchTracking = order.trackingNumber?.toLowerCase().includes(q);
+                            return matchName || matchPhone || matchNum || matchCity || matchArea || matchPin || matchTracking;
+                          }
+                          return true;
+                        })
+                        .map((order) => {
+                          const isEditingThisOrder = editingOrderId === order.id;
+
+                          return (
+                            <div
+                              key={order.id}
+                              className="bg-white border border-stone-200 rounded-xl overflow-hidden shadow-2xs hover:shadow-sm transition-shadow text-xs"
+                            >
+                              {/* Order Card Header */}
+                              <div className="p-4 bg-stone-50 border-b border-stone-200 flex flex-wrap items-center justify-between gap-3">
+                                <div className="flex flex-wrap items-center gap-3">
+                                  <span className="font-mono font-bold text-sm text-stone-900 bg-white px-2.5 py-1 rounded border border-stone-300">
+                                    #{order.orderNumber}
+                                  </span>
+                                  <div className="flex items-center gap-1.5 text-stone-500 text-[11px]">
+                                    <Clock className="w-3.5 h-3.5" />
+                                    <span>{order.date}</span>
+                                  </div>
+                                  <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                    {order.paymentMethod} (PAID)
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                  <div className="text-right">
+                                    <span className="text-[10px] text-stone-400 uppercase tracking-wider block">Total Bill</span>
+                                    <span className="font-bold text-base text-amber-900 font-mono">
+                                      ₹{order.total.toLocaleString('en-IN')}
+                                    </span>
+                                  </div>
+
+                                  {/* Delivery Status Badge */}
+                                  <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${
+                                    order.deliveryStatus === 'Delivered'
+                                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                      : order.deliveryStatus === 'Dispatched from Coimbatore' || order.deliveryStatus === 'Out for Delivery'
+                                      ? 'bg-blue-100 text-blue-800 border border-blue-300'
+                                      : 'bg-amber-100 text-amber-900 border border-amber-300'
+                                  }`}>
+                                    {order.deliveryStatus || 'Processing'}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Order Card Body */}
+                              <div className="p-4 sm:p-5 grid grid-cols-1 md:grid-cols-12 gap-5">
+                                {/* Col 1: Customer & Courier Destination (5 cols) */}
+                                <div className="md:col-span-5 space-y-3 border-b md:border-b-0 md:border-r border-stone-200 pb-4 md:pb-0 md:pr-4">
+                                  <div>
+                                    <span className="text-[10px] uppercase font-bold text-stone-400 tracking-wider block mb-1">
+                                      Customer &amp; Recipient
+                                    </span>
+                                    <p className="font-bold text-sm text-stone-900">{order.address?.fullName || 'Customer'}</p>
+                                    <div className="flex items-center gap-1.5 text-stone-600 mt-1">
+                                      <Phone className="w-3.5 h-3.5 text-stone-400" />
+                                      <span className="font-mono font-semibold">{order.address?.phone}</span>
+                                    </div>
+                                  </div>
+
+                                  <div>
+                                    <span className="text-[10px] uppercase font-bold text-stone-400 tracking-wider block mb-1 flex items-center gap-1">
+                                      <MapPin className="w-3.5 h-3.5 text-amber-800" />
+                                      <span>Courier Delivery Address</span>
+                                    </span>
+                                    <div className="bg-stone-50 p-2.5 rounded border border-stone-200 text-stone-700 leading-snug">
+                                      <p>{order.address?.street}</p>
+                                      <p>{order.address?.area}</p>
+                                      <p className="font-bold text-stone-900 mt-0.5">
+                                        {order.address?.city} - <span className="font-mono text-amber-900">{order.address?.pincode}</span>
+                                      </p>
+                                      <p className="text-[11px] text-stone-500">{order.address?.state || 'Tamil Nadu'}</p>
+                                    </div>
+                                  </div>
+
+                                  {/* Courier Partner & Tracking Status */}
+                                  <div className="pt-1">
+                                    {!isEditingThisOrder ? (
+                                      <div className="p-2.5 bg-blue-50/70 border border-blue-200 rounded flex items-center justify-between gap-2">
+                                        <div>
+                                          <p className="font-semibold text-blue-950 text-xs">
+                                            {order.courierPartner || 'ST Courier / Direct Courier'}
+                                          </p>
+                                          <p className="text-[11px] text-blue-800 font-mono">
+                                            AWB / Track: <strong>{order.trackingNumber || 'Pending Assignment'}</strong>
+                                          </p>
+                                        </div>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setEditingOrderId(order.id);
+                                            setEditCourierPartner(order.courierPartner || 'ST Courier');
+                                            setEditTrackingNo(order.trackingNumber || '');
+                                            setEditStatus(order.deliveryStatus || 'Processing');
+                                          }}
+                                          className="text-[11px] text-blue-700 hover:text-blue-900 underline font-semibold cursor-pointer shrink-0"
+                                        >
+                                          Edit Tracking
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <div className="p-3 bg-amber-50 border border-amber-300 rounded space-y-2">
+                                        <p className="font-bold text-stone-900 text-xs">Update Courier &amp; Tracking</p>
+                                        <div>
+                                          <label className="text-[10px] text-stone-500 uppercase block">Courier Partner</label>
+                                          <select
+                                            value={editCourierPartner}
+                                            onChange={(e) => setEditCourierPartner(e.target.value)}
+                                            className="w-full mt-0.5 p-1.5 bg-white border border-stone-300 rounded text-xs"
+                                          >
+                                            <option value="ST Courier">ST Courier</option>
+                                            <option value="Professional Couriers">The Professional Couriers</option>
+                                            <option value="DTDC Express">DTDC Express</option>
+                                            <option value="India Post (Speed Post)">India Post (Speed Post)</option>
+                                            <option value="Delhivery">Delhivery</option>
+                                            <option value="Porter / Local CBE">Porter / Local Coimbatore</option>
+                                          </select>
+                                        </div>
+
+                                        <div>
+                                          <label className="text-[10px] text-stone-500 uppercase block">Tracking / AWB Number</label>
+                                          <input
+                                            type="text"
+                                            value={editTrackingNo}
+                                            onChange={(e) => setEditTrackingNo(e.target.value)}
+                                            placeholder="e.g. STC-641002-8419"
+                                            className="w-full mt-0.5 p-1.5 bg-white border border-stone-300 rounded text-xs font-mono"
+                                          />
+                                        </div>
+
+                                        <div>
+                                          <label className="text-[10px] text-stone-500 uppercase block">Delivery Status</label>
+                                          <select
+                                            value={editStatus}
+                                            onChange={(e) => setEditStatus(e.target.value as any)}
+                                            className="w-full mt-0.5 p-1.5 bg-white border border-stone-300 rounded text-xs"
+                                          >
+                                            <option value="Processing">Processing / Tailoring</option>
+                                            <option value="Dispatched from Coimbatore">Dispatched from Coimbatore</option>
+                                            <option value="Out for Delivery">Out for Delivery</option>
+                                            <option value="Delivered">Delivered</option>
+                                          </select>
+                                        </div>
+
+                                        <div className="flex items-center gap-2 pt-1">
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              updateOrderStatus(order.id, editStatus, editCourierPartner, editTrackingNo);
+                                              setEditingOrderId(null);
+                                              setSuccessToast(`Order #${order.orderNumber} updated successfully!`);
+                                              setTimeout(() => setSuccessToast(''), 3000);
+                                            }}
+                                            className="px-3 py-1 bg-emerald-700 text-white rounded font-bold text-xs cursor-pointer hover:bg-emerald-800"
+                                          >
+                                            Save Changes
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => setEditingOrderId(null)}
+                                            className="px-2.5 py-1 bg-stone-200 text-stone-700 rounded text-xs cursor-pointer hover:bg-stone-300"
+                                          >
+                                            Cancel
+                                          </button>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Col 2: Ordered Items & Total Calculation (7 cols) */}
+                                <div className="md:col-span-7 flex flex-col justify-between space-y-4">
+                                  <div>
+                                    <span className="text-[10px] uppercase font-bold text-stone-400 tracking-wider block mb-2">
+                                      Ordered Garments ({order.items.reduce((s, i) => s + i.quantity, 0)} Items)
+                                    </span>
+                                    <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                                      {order.items.map((item, idx) => (
+                                        <div
+                                          key={idx}
+                                          className="p-2 bg-stone-50 border border-stone-200 rounded flex items-center justify-between gap-3"
+                                        >
+                                          <div className="flex items-center gap-2.5">
+                                            <img
+                                              src={item.product.images?.[0] || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=128&q=80'}
+                                              alt={item.product.title}
+                                              className="w-10 h-12 object-cover object-top rounded border border-stone-300 shrink-0"
+                                            />
+                                            <div>
+                                              <p className="font-semibold text-stone-900 line-clamp-1">{item.product.title}</p>
+                                              <p className="text-[11px] text-stone-500">
+                                                Size: <strong>{item.selectedSize}</strong> · Color: {item.selectedColor} · Qty: <strong>{item.quantity}</strong>
+                                              </p>
+                                            </div>
+                                          </div>
+                                          <span className="font-semibold tabular-nums text-stone-900 shrink-0">
+                                            ₹{(item.product.price * item.quantity).toLocaleString('en-IN')}
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+
+                                  {/* Action Buttons Row */}
+                                  <div className="pt-3 border-t border-stone-200 flex flex-wrap items-center justify-between gap-2">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      {/* WhatsApp to Customer */}
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const url = getCustomerWhatsAppOrderUrl(order);
+                                          window.open(url, '_blank', 'noopener,noreferrer');
+                                        }}
+                                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-2xs transition-colors"
+                                        title="Send Order Summary to Customer WhatsApp"
+                                      >
+                                        <MessageCircle className="w-3.5 h-3.5" />
+                                        <span>WhatsApp Customer</span>
+                                      </button>
+
+                                      {/* Print Bill / Invoice */}
+                                      <button
+                                        type="button"
+                                        onClick={() => setPrintModalOrder({ order, view: 'invoice' })}
+                                        className="px-3 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded font-semibold text-xs flex items-center gap-1.5 cursor-pointer border border-stone-300 transition-colors"
+                                        title="Print Tax Invoice / Bill"
+                                      >
+                                        <FileText className="w-3.5 h-3.5 text-stone-600" />
+                                        <span>Print Bill</span>
+                                      </button>
+
+                                      {/* Print Courier Label */}
+                                      <button
+                                        type="button"
+                                        onClick={() => setPrintModalOrder({ order, view: 'courier_label' })}
+                                        className="px-3 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded font-semibold text-xs flex items-center gap-1.5 cursor-pointer border border-stone-300 transition-colors"
+                                        title="Print Courier Shipping Address Label"
+                                      >
+                                        <Tag className="w-3.5 h-3.5 text-amber-800" />
+                                        <span>Courier Label</span>
+                                      </button>
+                                    </div>
+
+                                    {/* Delete Button */}
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        if (confirm(`Are you sure you want to delete Order #${order.orderNumber}?`)) {
+                                          deleteOrder(order.id);
+                                          setSuccessToast(`Order #${order.orderNumber} deleted.`);
+                                          setTimeout(() => setSuccessToast(''), 3000);
+                                        }
+                                      }}
+                                      className="p-1.5 text-stone-400 hover:text-rose-600 rounded cursor-pointer"
+                                      title="Delete order"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* TAB 1: Main Frame Picture Banner Customizer */}
               {activeTab === 'hero' && (
@@ -870,7 +1321,7 @@ export const StoreManagerModal: React.FC = () => {
                       </select>
                     </div>
 
-                    {/* Product Photo Upload from Device / Gallery (Upload photos from device) */}
+                    {/* Product Photo Upload from Device / Gallery (User request: upload photos from device option enable) */}
                     <div className="sm:col-span-2 space-y-2">
                       <label className="block text-stone-700 font-bold mb-1">
                         Product Photo * (Upload from Device / Gallery)
@@ -1342,7 +1793,7 @@ export const StoreManagerModal: React.FC = () => {
 
             {/* Footer */}
             <div className="p-4 bg-stone-100 border-t border-stone-200 flex items-center justify-between text-xs text-stone-600">
-              <span>All changes to banner, categories, and products are saved immediately.</span>
+              <span>All changes to orders, dispatch tracking, banner, categories, and products are saved immediately.</span>
               <button
                 onClick={() => {
                   setIsStoreManagerOpen(false);
@@ -1358,6 +1809,15 @@ export const StoreManagerModal: React.FC = () => {
         )}
 
       </div>
+
+      {/* Printable Tax Invoice & Courier Shipping Label Modal */}
+      {printModalOrder && (
+        <OrderPrintModal
+          order={printModalOrder.order}
+          initialView={printModalOrder.view}
+          onClose={() => setPrintModalOrder(null)}
+        />
+      )}
     </div>
   );
 };

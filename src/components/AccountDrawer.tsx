@@ -1,17 +1,12 @@
 import React, { useState } from 'react';
 import {
   X,
-  User,
   Package,
   MapPin,
   LogOut,
   Plus,
   Trash2,
-  Clock,
-  ExternalLink,
-  CheckCircle2,
-  Phone,
-  Mail
+  ExternalLink
 } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import { Address } from '../types/store';
@@ -24,19 +19,18 @@ export const AccountDrawer: React.FC = () => {
     logout,
     saveAddress,
     deleteAddress,
-    setOrderSuccess,
-    setIsStoreManagerOpen
+    setOrderSuccess
   } = useStore();
 
   const [activeTab, setActiveTab] = useState<'orders' | 'addresses'>('orders');
   const [showAddAddress, setShowAddAddress] = useState(false);
   const [newAddr, setNewAddr] = useState<Partial<Address>>({
-    fullName: user?.name || '',
-    phone: user?.phone || '',
+    fullName: user?.name ? user.name.replace(/[^a-zA-Z\s]/g, '') : '',
+    phone: user?.phone ? user.phone.replace(/\D/g, '').slice(0, 10) : '',
     street: '',
-    area: 'R.S. Puram',
-    city: 'Coimbatore',
-    pincode: '641002',
+    area: '',
+    city: '',
+    pincode: '',
     state: 'Tamil Nadu'
   });
 
@@ -44,19 +38,36 @@ export const AccountDrawer: React.FC = () => {
 
   const handleAddAddressSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newAddr.fullName || !newAddr.street) return;
+    if (!newAddr.fullName?.trim() || !newAddr.street?.trim() || !newAddr.phone?.trim()) return;
+
+    // Strict sanitization: Alphabets only for name, 10 digits numeric only for phone
+    const cleanName = (newAddr.fullName || user.name || '').replace(/[^a-zA-Z\s]/g, '').trim();
+    const cleanPhone = (newAddr.phone || user.phone || '').replace(/\D/g, '').slice(0, 10);
+
     const addr: Address = {
       id: `addr-${Date.now()}`,
-      fullName: newAddr.fullName || user.name,
-      phone: newAddr.phone || user.phone,
-      street: newAddr.street || '',
-      area: newAddr.area || 'Coimbatore',
-      city: newAddr.city || 'Coimbatore',
-      pincode: newAddr.pincode || '641002',
+      fullName: cleanName || user.name,
+      phone: cleanPhone || user.phone,
+      street: newAddr.street.trim(),
+      area: newAddr.area ? newAddr.area.trim() : '',
+      city: newAddr.city ? newAddr.city.trim() : 'Coimbatore',
+      pincode: newAddr.pincode ? newAddr.pincode.replace(/\D/g, '').slice(0, 6) : '',
       state: newAddr.state || 'Tamil Nadu',
       isDefault: false
     };
+
     saveAddress(addr);
+
+    // Reset form after saving
+    setNewAddr({
+      fullName: user.name ? user.name.replace(/[^a-zA-Z\s]/g, '') : '',
+      phone: user.phone ? user.phone.replace(/\D/g, '').slice(0, 10) : '',
+      street: '',
+      area: '',
+      city: '',
+      pincode: '',
+      state: 'Tamil Nadu'
+    });
     setShowAddAddress(false);
   };
 
@@ -80,6 +91,7 @@ export const AccountDrawer: React.FC = () => {
           <button
             onClick={() => setIsAccountOpen(false)}
             className="p-1.5 text-stone-500 hover:text-stone-900 rounded-md cursor-pointer"
+            aria-label="Close Account Drawer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -130,37 +142,38 @@ export const AccountDrawer: React.FC = () => {
                 user.orderHistory.map((order) => (
                   <div
                     key={order.id}
-                    className="p-4 bg-white border border-stone-200 rounded-md space-y-3 shadow-2xs"
+                    className="p-4 bg-white border border-stone-200 rounded-lg shadow-2xs space-y-3"
                   >
-                    {/* Order Heading */}
-                    <div className="flex items-center justify-between text-xs border-b border-stone-100 pb-2">
+                    {/* Order ID & Status */}
+                    <div className="flex items-center justify-between border-b border-stone-100 pb-2">
                       <div>
-                        <span className="font-bold text-stone-900 font-mono">{order.orderNumber}</span>
-                        <span className="text-stone-400 mx-1.5">·</span>
-                        <span className="text-stone-500">{order.date}</span>
+                        <span className="font-mono text-xs font-bold text-stone-900">{order.id}</span>
+                        <p className="text-[11px] text-stone-400">
+                          {new Date(order.createdAt).toLocaleDateString('en-IN', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric'
+                          })}
+                        </p>
                       </div>
-                      <span className="font-semibold text-amber-900 bg-amber-50 px-2 py-0.5 rounded text-[11px]">
-                        {order.deliveryStatus}
+                      <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                        {order.status.toUpperCase()}
                       </span>
                     </div>
 
-                    {/* Items */}
-                    <div className="space-y-2">
+                    {/* Order Items */}
+                    <div className="space-y-2 py-1">
                       {order.items.map((item) => (
-                        <div key={item.id} className="flex gap-3 text-xs items-center">
+                        <div key={item.id} className="flex gap-2.5 items-center text-xs">
                           <img
-                            src={item.product.images[0]}
-                            alt={item.product.title}
-                            referrerPolicy="no-referrer"
-                            className="w-12 h-14 object-cover object-top rounded border border-stone-200"
+                            src={item.image}
+                            alt={item.title}
+                            className="w-10 h-12 object-cover rounded bg-stone-100 shrink-0"
                           />
-                          <div className="flex-1">
-                            <p className="font-semibold text-stone-900 line-clamp-1">{item.product.title}</p>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-stone-900 truncate">{item.title}</p>
                             <p className="text-[11px] text-stone-500">
-                              {item.selectedSize} · Qty {item.quantity} · {item.selectedColor}
-                            </p>
-                            <p className="font-medium text-stone-900 tabular-nums">
-                              ₹{(item.product.price * item.quantity).toLocaleString('en-IN')}
+                              Qty: {item.quantity} × ₹{item.price.toLocaleString('en-IN')}
                             </p>
                           </div>
                         </div>
@@ -171,7 +184,9 @@ export const AccountDrawer: React.FC = () => {
                     <div className="pt-2 border-t border-stone-100 text-xs space-y-1 bg-stone-50/70 p-2.5 rounded">
                       <div className="flex justify-between text-stone-600 text-[11px]">
                         <span>Delivery Address:</span>
-                        <span className="font-medium text-stone-800">{order.address.area}, {order.address.city} ({order.address.pincode})</span>
+                        <span className="font-medium text-stone-800">
+                          {order.address.area ? `${order.address.area}, ` : ''}{order.address.city} ({order.address.pincode})
+                        </span>
                       </div>
                       <div className="flex justify-between text-stone-600 text-[11px]">
                         <span>Payment Method:</span>
@@ -181,7 +196,9 @@ export const AccountDrawer: React.FC = () => {
 
                     {/* Total & Action */}
                     <div className="flex items-center justify-between pt-1">
-                      <span className="text-xs text-stone-500">Total: <strong className="text-stone-900 text-sm tabular-nums">₹{order.total.toLocaleString('en-IN')}</strong></span>
+                      <span className="text-xs text-stone-500">
+                        Total: <strong className="text-stone-900 text-sm tabular-nums">₹{order.total.toLocaleString('en-IN')}</strong>
+                      </span>
                       <button
                         onClick={() => {
                           setOrderSuccess(order);
@@ -193,7 +210,6 @@ export const AccountDrawer: React.FC = () => {
                         <ExternalLink className="w-3.5 h-3.5" />
                       </button>
                     </div>
-
                   </div>
                 ))
               )}
@@ -218,57 +234,113 @@ export const AccountDrawer: React.FC = () => {
               {showAddAddress && (
                 <form onSubmit={handleAddAddressSubmit} className="p-4 bg-white border border-stone-200 rounded-md text-xs space-y-3">
                   <p className="font-bold text-stone-900">New Delivery Location</p>
-                  <div>
-                    <label className="block text-stone-600 mb-1">Full Name</label>
-                    <input
-                      type="text"
-                      required
-                      value={newAddr.fullName}
-                      onChange={(e) => setNewAddr({ ...newAddr, fullName: e.target.value })}
-                      className="w-full px-2.5 py-1.5 border border-stone-300 rounded"
-                    />
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-stone-600 mb-1">Full Name (Alphabets only) *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Priya Lakshmi"
+                        value={newAddr.fullName || ''}
+                        onChange={(e) =>
+                          setNewAddr({ ...newAddr, fullName: e.target.value.replace(/[^a-zA-Z\s]/g, '') })
+                        }
+                        className="w-full px-2.5 py-1.5 border border-stone-300 rounded focus:outline-amber-800"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-stone-600 mb-1">Mobile Number (10 digits) *</label>
+                      <input
+                        type="tel"
+                        required
+                        maxLength={10}
+                        placeholder="10-digit number"
+                        value={newAddr.phone || ''}
+                        onChange={(e) =>
+                          setNewAddr({ ...newAddr, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })
+                        }
+                        className="w-full px-2.5 py-1.5 border border-stone-300 rounded font-mono focus:outline-amber-800"
+                      />
+                    </div>
                   </div>
+
                   <div>
-                    <label className="block text-stone-600 mb-1">Street Address</label>
+                    <label className="block text-stone-600 mb-1">Street Address *</label>
                     <input
                       type="text"
                       required
-                      value={newAddr.street}
+                      placeholder="Door / Flat No., Apartment / Street Name"
+                      value={newAddr.street || ''}
                       onChange={(e) => setNewAddr({ ...newAddr, street: e.target.value })}
-                      className="w-full px-2.5 py-1.5 border border-stone-300 rounded"
+                      className="w-full px-2.5 py-1.5 border border-stone-300 rounded focus:outline-amber-800"
                     />
                   </div>
+
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <label className="block text-stone-600 mb-1">Area / Locality</label>
                       <input
                         type="text"
-                        value={newAddr.area}
+                        placeholder="Area / Landmark"
+                        value={newAddr.area || ''}
                         onChange={(e) => setNewAddr({ ...newAddr, area: e.target.value })}
-                        className="w-full px-2.5 py-1.5 border border-stone-300 rounded"
+                        className="w-full px-2.5 py-1.5 border border-stone-300 rounded focus:outline-amber-800"
                       />
                     </div>
                     <div>
-                      <label className="block text-stone-600 mb-1">PIN Code</label>
+                      <label className="block text-stone-600 mb-1">PIN Code (6 digits)</label>
                       <input
                         type="text"
-                        value={newAddr.pincode}
-                        onChange={(e) => setNewAddr({ ...newAddr, pincode: e.target.value })}
-                        className="w-full px-2.5 py-1.5 border border-stone-300 rounded font-mono"
+                        maxLength={6}
+                        placeholder="6-digit PIN"
+                        value={newAddr.pincode || ''}
+                        onChange={(e) =>
+                          setNewAddr({ ...newAddr, pincode: e.target.value.replace(/\D/g, '').slice(0, 6) })
+                        }
+                        className="w-full px-2.5 py-1.5 border border-stone-300 rounded font-mono focus:outline-amber-800"
                       />
                     </div>
                   </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-stone-600 mb-1">City</label>
+                      <input
+                        type="text"
+                        placeholder="City"
+                        value={newAddr.city || ''}
+                        onChange={(e) =>
+                          setNewAddr({ ...newAddr, city: e.target.value.replace(/[^a-zA-Z\s]/g, '') })
+                        }
+                        className="w-full px-2.5 py-1.5 border border-stone-300 rounded focus:outline-amber-800"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-stone-600 mb-1">State</label>
+                      <input
+                        type="text"
+                        placeholder="State"
+                        value={newAddr.state || ''}
+                        onChange={(e) =>
+                          setNewAddr({ ...newAddr, state: e.target.value.replace(/[^a-zA-Z\s]/g, '') })
+                        }
+                        className="w-full px-2.5 py-1.5 border border-stone-300 rounded focus:outline-amber-800"
+                      />
+                    </div>
+                  </div>
+
                   <div className="flex gap-2 pt-2">
                     <button
                       type="submit"
-                      className="flex-1 py-2 bg-stone-900 text-white rounded font-medium cursor-pointer"
+                      className="flex-1 py-2 bg-stone-900 text-white rounded font-medium cursor-pointer hover:bg-stone-800"
                     >
                       Save Address
                     </button>
                     <button
                       type="button"
                       onClick={() => setShowAddAddress(false)}
-                      className="px-3 py-2 border border-stone-300 rounded text-stone-600 cursor-pointer"
+                      className="px-3 py-2 border border-stone-300 rounded text-stone-600 cursor-pointer hover:bg-stone-50"
                     >
                       Cancel
                     </button>
@@ -285,19 +357,23 @@ export const AccountDrawer: React.FC = () => {
                       <button
                         onClick={() => deleteAddress(addr.id)}
                         className="text-stone-400 hover:text-rose-600 cursor-pointer"
+                        title="Delete Address"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     )}
                   </div>
-                  <p className="text-stone-600">{addr.street}, {addr.area}</p>
-                  <p className="text-stone-600">{addr.city} - {addr.pincode}, {addr.state}</p>
+                  <p className="text-stone-600">
+                    {addr.street}{addr.area ? `, ${addr.area}` : ''}
+                  </p>
+                  <p className="text-stone-600">
+                    {addr.city} {addr.pincode ? `- ${addr.pincode}` : ''}{addr.state ? `, ${addr.state}` : ''}
+                  </p>
                   <p className="text-stone-500 font-mono text-[11px]">Phone: {addr.phone}</p>
                 </div>
               ))}
             </div>
           )}
-
         </div>
 
         {/* Footer with Logout */}

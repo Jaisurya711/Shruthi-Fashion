@@ -22,13 +22,51 @@
   width: 6px;
   height: 6px;
 }
+
 ::-webkit-scrollbar-track {
   background: #f5f5f4;
 }
+
 ::-webkit-scrollbar-thumb {
   background: #d6d3d1;
   border-radius: 9999px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: #a8a29e;
+}
+
+/* Print Styling for E-Commerce Bill & Courier Labels */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Hide normal web elements */
+  nav, footer, .no-print, header, button, .modal-backdrop-blur {
+    display: none !important;
+  }
+
+  /* Force print area to cover page */
+  .printable-document {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 20px !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    border: none !important;
+    display: block !important;
+    z-index: 999999 !important;
+  }
+
+  @page {
+    margin: 12mm;
+    size: auto;
+  }
 }

@@ -85,7 +85,8 @@ export interface UserOrder {
     razorpayOrderId?: string;
     razorpaySignature?: string;
   };
-  deliveryStatus: 'Order Placed' | 'Weaving & Tailoring' | 'Dispatched from Coimbatore' | 'Out for Delivery' | 'Delivered';
+  deliveryStatus: 'Order Placed' | 'Processing' | 'Weaving & Tailoring' | 'Dispatched from Coimbatore' | 'Out for Delivery' | 'Delivered';
+  courierPartner?: string;
   trackingNumber: string;
   estimatedDelivery: string;
 }
@@ -125,6 +126,7 @@ export interface StoreBankDetails {
   gpayNumber: string;
   phonePeNumber: string;
   razorpayKeyId?: string;
+  razorpayKeySecret?: string;
   razorpayPaymentPageUrl?: string;
   useRazorpay?: boolean;
 }
