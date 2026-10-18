@@ -25,7 +25,10 @@ import {
   MapPin,
   Clock,
   Filter,
-  Check
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Star
 } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import { Product, UserOrder } from '../types/store';
@@ -121,7 +124,8 @@ export const StoreManagerModal: React.FC = () => {
   const [subcategory, setSubcategory] = useState(subcategories[0] || 'Straight Cut Kurti');
   const [fabric, setFabric] = useState('100% Breathable Combed Cotton');
   const [occasion, setOccasion] = useState('Daily & Office Wear');
-  const [imageUrl, setImageUrl] = useState('');
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [imageUrlInput, setImageUrlInput] = useState('');
   const [colorName, setColorName] = useState('Navy Blue');
   const [colorHex, setColorHex] = useState('#1E3A8A');
   const [selectedSizes, setSelectedSizes] = useState<string[]>(['M', 'L', 'XL', 'XXL']);
@@ -138,13 +142,15 @@ export const StoreManagerModal: React.FC = () => {
   const [editSubcategory, setEditSubcategory] = useState('');
   const [editFabric, setEditFabric] = useState('');
   const [editStockCount, setEditStockCount] = useState('');
-  const [editImage, setEditImage] = useState('');
+  const [editImages, setEditImages] = useState<string[]>([]);
+  const [editImageUrlInput, setEditImageUrlInput] = useState('');
 
   // File Input Refs for direct Device / Phone Gallery Upload
   const addFileInputRef = useRef<HTMLInputElement>(null);
   const editFileInputRef = useRef<HTMLInputElement>(null);
   const heroFileInputRef = useRef<HTMLInputElement>(null);
 
+  // Single file upload (used for Hero banner)
   const handleDeviceImageUpload = (
     e: React.ChangeEvent<HTMLInputElement>,
     onLoaded: (dataUrl: string) => void
@@ -169,6 +175,81 @@ export const StoreManagerModal: React.FC = () => {
     e.target.value = '';
   };
 
+  // Multi-file upload for N number of photos with NO LIMIT (User request: upload n number of photo dont set limit)
+  const handleDeviceMultiImageUpload = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    onAddImages: (dataUrls: string[]) => void
+  ) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const fileList = Array.from(files);
+    const validFiles = fileList.filter((f) => f.type.startsWith('image/'));
+
+    if (validFiles.length === 0) {
+      alert('Please select valid image files (JPG, PNG, WEBP, etc.) from your device gallery.');
+      return;
+    }
+
+    const readers = validFiles.map((file) => {
+      return new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const result = event.target?.result as string;
+          resolve(result || '');
+        };
+        reader.onerror = () => resolve('');
+        reader.readAsDataURL(file);
+      });
+    });
+
+    Promise.all(readers).then((results) => {
+      const validResults = results.filter((url): url is string => Boolean(url));
+      if (validResults.length > 0) {
+        onAddImages(validResults);
+        showToast(`✓ Added ${validResults.length} photo(s) from device gallery! (No limit)`);
+      }
+    });
+
+    e.target.value = '';
+  };
+
+  const moveImage = (
+    list: string[],
+    setList: React.Dispatch<React.SetStateAction<string[]>>,
+    fromIndex: number,
+    toIndex: number
+  ) => {
+    if (toIndex < 0 || toIndex >= list.length) return;
+    const updated = [...list];
+    const [moved] = updated.splice(fromIndex, 1);
+    updated.splice(toIndex, 0, moved);
+    setList(updated);
+  };
+
+  const removeImageAt = (
+    list: string[],
+    setList: React.Dispatch<React.SetStateAction<string[]>>,
+    index: number
+  ) => {
+    const updated = list.filter((_, i) => i !== index);
+    setList(updated);
+    showToast('Photo removed.');
+  };
+
+  const setAsCoverPhoto = (
+    list: string[],
+    setList: React.Dispatch<React.SetStateAction<string[]>>,
+    index: number
+  ) => {
+    if (index === 0) return;
+    const updated = [...list];
+    const [target] = updated.splice(index, 1);
+    updated.unshift(target);
+    setList(updated);
+    showToast('Photo set as main cover photo! ★');
+  };
+
   const handleStartEdit = (p: Product) => {
     setEditingProduct(p);
     setEditTitle(p.title);
@@ -178,13 +259,14 @@ export const StoreManagerModal: React.FC = () => {
     setEditCategory(p.category);
     setEditSubcategory(p.subcategory);
     setEditFabric(p.fabric);
-    setEditStockCount(p.stockCount.toString());
-    setEditImage(p.images[0] || '');
+    setEditImages(Array.isArray(p.images) ? [...p.images] : []);
+    setEditImageUrlInput('');
   };
 
   const handleSaveProductEdit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingProduct) return;
+    const finalImages = editImages.length > 0 ? editImages : (editingProduct.images || []);
     const updated: Product = {
       ...editingProduct,
       title: editTitle.trim() || editingProduct.title,
@@ -195,11 +277,11 @@ export const StoreManagerModal: React.FC = () => {
       subcategory: editSubcategory || editingProduct.subcategory,
       fabric: editFabric || editingProduct.fabric,
       stockCount: Number(editStockCount) || editingProduct.stockCount,
-      images: editImage ? [editImage, editImage] : editingProduct.images,
+      images: finalImages,
     };
     updateProduct(updated);
     setEditingProduct(null);
-    showToast(`"${updated.title}" updated successfully with your gallery photo! ✓`);
+    showToast(`"${updated.title}" updated successfully with ${finalImages.length} photo(s)! ✓`);
   };
 
   if (!isStoreManagerOpen) return null;
@@ -266,7 +348,10 @@ export const StoreManagerModal: React.FC = () => {
     e.preventDefault();
     if (!title.trim() || !price) return;
 
-    const finalImage = imageUrl.trim() || products[0]?.images[0] || '';
+    // Use uploadedImages from device gallery (N number of photos), fallback to first product image if none
+    const finalImages = uploadedImages.length > 0
+      ? uploadedImages
+      : [products[0]?.images[0] || ''];
 
     const newProduct: Product = {
       id: `sf-custom-${Date.now()}`,
@@ -287,7 +372,7 @@ export const StoreManagerModal: React.FC = () => {
       expressCoimbatore: true,
       rating: 4.9,
       reviewCount: 1,
-      images: [finalImage, finalImage],
+      images: finalImages,
       description: `New arrival at Shruthi Fashion Kovundampalayam! Premium quality ${subcategory} made with ${fabric}. Designed for comfort and lasting elegance.`,
       fabricDetails: `${fabric} with durable stitching and color fastness.`,
       careInstructions: 'Machine wash delicate or cold hand wash. Dry in shade.',
@@ -306,13 +391,14 @@ export const StoreManagerModal: React.FC = () => {
     };
 
     addProduct(newProduct);
-    showToast(`"${newProduct.title}" added to your live store!`);
+    showToast(`"${newProduct.title}" added to your live store with ${finalImages.length} photo(s)!`);
 
     setTitle('');
     setSubtitle('');
     setPrice('');
     setOriginalPrice('');
-    setImageUrl('');
+    setUploadedImages([]);
+    setImageUrlInput('');
     setSpecialFeatures('');
 
     setTimeout(() => {
@@ -1366,77 +1452,202 @@ export const StoreManagerModal: React.FC = () => {
                       </select>
                     </div>
 
-                    {/* Product Photo Upload from Device / Gallery (User request: upload photos from device option enable) */}
+                    {/* Product Photos Upload from Device / Gallery (User request: upload n number of photo dont set limit) */}
                     <div className="sm:col-span-2 space-y-2">
-                      <label className="block text-stone-700 font-bold mb-1">
-                        Product Photo * (Upload from Device / Gallery)
-                      </label>
+                      <div className="flex items-center justify-between">
+                        <label className="block text-stone-700 font-bold">
+                          Product Photos * (Upload N number of photos · No limit)
+                        </label>
+                        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
+                          {uploadedImages.length} {uploadedImages.length === 1 ? 'photo' : 'photos'} uploaded
+                        </span>
+                      </div>
 
                       <input
                         type="file"
+                        multiple
                         accept="image/*"
                         ref={addFileInputRef}
                         className="hidden"
-                        onChange={(e) => handleDeviceImageUpload(e, (dataUrl) => setImageUrl(dataUrl))}
+                        onChange={(e) =>
+                          handleDeviceMultiImageUpload(e, (dataUrls) =>
+                            setUploadedImages((prev) => [...prev, ...dataUrls])
+                          )
+                        }
                       />
 
-                      {imageUrl ? (
-                        <div className="flex items-center gap-4 p-3 bg-stone-50 border-2 border-dashed border-amber-300 rounded-lg">
-                          <img
-                            src={imageUrl}
-                            alt="Uploaded preview"
-                            className="w-20 h-24 object-cover rounded border border-stone-300 shadow-xs shrink-0"
-                          />
-                          <div className="space-y-1.5 flex-1 min-w-0">
-                            <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                              <span>Photo ready from device gallery</span>
-                            </span>
-                            <div className="flex items-center gap-2 pt-1 flex-wrap">
+                      {uploadedImages.length > 0 ? (
+                        <div className="p-3 bg-stone-50 border-2 border-dashed border-amber-300 rounded-lg space-y-3">
+                          {/* Grid of uploaded photos */}
+                          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                            {uploadedImages.map((img, idx) => (
+                              <div
+                                key={idx}
+                                className={`relative group rounded-lg overflow-hidden border-2 bg-white shadow-xs flex flex-col ${
+                                  idx === 0
+                                    ? 'border-amber-600 ring-2 ring-amber-400'
+                                    : 'border-stone-300'
+                                }`}
+                              >
+                                {/* Photo preview */}
+                                <div className="relative aspect-3/4 w-full bg-stone-100 overflow-hidden">
+                                  <img
+                                    src={img}
+                                    alt={`Product upload ${idx + 1}`}
+                                    className="w-full h-full object-cover"
+                                  />
+
+                                  {/* Badge: Main Cover Photo vs Additional */}
+                                  <div className="absolute top-1 left-1 z-10">
+                                    {idx === 0 ? (
+                                      <span className="inline-flex items-center gap-1 bg-amber-700 text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow-xs">
+                                        <Star className="w-2.5 h-2.5 fill-amber-300 text-amber-300" />
+                                        <span>MAIN COVER</span>
+                                      </span>
+                                    ) : (
+                                      <span className="bg-stone-900/80 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-xs">
+                                        #{idx + 1}
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {/* Delete Button */}
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      removeImageAt(uploadedImages, setUploadedImages, idx)
+                                    }
+                                    title="Delete photo"
+                                    className="absolute top-1 right-1 p-1 bg-rose-600/90 hover:bg-rose-700 text-white rounded-md shadow-xs cursor-pointer transition-colors"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                </div>
+
+                                {/* Controls: Reorder & Make Cover */}
+                                <div className="p-1.5 bg-stone-50 border-t border-stone-200 flex items-center justify-between text-[11px]">
+                                  <div className="flex items-center gap-1">
+                                    <button
+                                      type="button"
+                                      disabled={idx === 0}
+                                      onClick={() =>
+                                        moveImage(uploadedImages, setUploadedImages, idx, idx - 1)
+                                      }
+                                      title="Move earlier"
+                                      className="p-1 rounded text-stone-600 hover:bg-stone-200 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                                    >
+                                      <ChevronLeft className="w-3 h-3" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={idx === uploadedImages.length - 1}
+                                      onClick={() =>
+                                        moveImage(uploadedImages, setUploadedImages, idx, idx + 1)
+                                      }
+                                      title="Move later"
+                                      className="p-1 rounded text-stone-600 hover:bg-stone-200 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                                    >
+                                      <ChevronRight className="w-3 h-3" />
+                                    </button>
+                                  </div>
+
+                                  {idx !== 0 && (
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setAsCoverPhoto(uploadedImages, setUploadedImages, idx)
+                                      }
+                                      className="text-[10px] font-bold text-amber-800 hover:underline cursor-pointer"
+                                    >
+                                      Make Cover
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+
+                            {/* Add More Photos Card in Grid */}
+                            <button
+                              type="button"
+                              onClick={() => addFileInputRef.current?.click()}
+                              className="aspect-3/4 rounded-lg border-2 border-dashed border-amber-400 hover:border-amber-700 bg-amber-50/50 hover:bg-amber-100/60 flex flex-col items-center justify-center p-3 text-center cursor-pointer transition-colors"
+                            >
+                              <div className="w-8 h-8 rounded-full bg-amber-200 text-amber-900 flex items-center justify-center mb-1">
+                                <Plus className="w-5 h-5" />
+                              </div>
+                              <span className="font-bold text-xs text-amber-900">Add More</span>
+                              <span className="text-[10px] text-amber-700">No limit</span>
+                            </button>
+                          </div>
+
+                          {/* Action Toolbar */}
+                          <div className="flex items-center justify-between pt-2 border-t border-stone-200 flex-wrap gap-2 text-xs">
+                            <div className="flex items-center gap-2">
                               <button
                                 type="button"
                                 onClick={() => addFileInputRef.current?.click()}
-                                className="px-3 py-1.5 bg-stone-900 hover:bg-stone-800 text-white rounded text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                                className="px-3 py-1.5 bg-stone-900 hover:bg-stone-800 text-white rounded text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-xs"
                               >
-                                <Camera className="w-3.5 h-3.5" />
-                                <span>Change Photo from Gallery</span>
+                                <Camera className="w-3.5 h-3.5 text-amber-300" />
+                                <span>Choose More Photos from Gallery</span>
                               </button>
                               <button
                                 type="button"
-                                onClick={() => setImageUrl('')}
-                                className="px-3 py-1.5 bg-stone-200 hover:bg-rose-100 hover:text-rose-700 text-stone-700 rounded text-xs font-semibold cursor-pointer"
+                                onClick={() => {
+                                  if (confirm('Clear all uploaded photos?')) setUploadedImages([]);
+                                }}
+                                className="px-2.5 py-1.5 bg-stone-200 hover:bg-rose-100 hover:text-rose-700 text-stone-700 rounded text-xs font-medium cursor-pointer"
                               >
-                                Remove
+                                Clear All
                               </button>
                             </div>
+                            <span className="text-[11px] text-stone-500">
+                              Tip: The 1st photo is used as main catalog cover. Customers can browse all {uploadedImages.length} photos!
+                            </span>
                           </div>
                         </div>
                       ) : (
                         <div
                           onClick={() => addFileInputRef.current?.click()}
-                          className="p-6 border-2 border-dashed border-stone-300 hover:border-amber-800 bg-stone-50 hover:bg-amber-50/50 rounded-lg text-center cursor-pointer transition-colors"
+                          className="p-8 border-2 border-dashed border-stone-300 hover:border-amber-800 bg-stone-50 hover:bg-amber-50/50 rounded-lg text-center cursor-pointer transition-colors"
                         >
                           <div className="w-12 h-12 mx-auto rounded-full bg-amber-100 text-amber-800 flex items-center justify-center mb-2">
                             <Upload className="w-6 h-6" />
                           </div>
-                          <p className="font-bold text-stone-900 text-xs">
-                            Tap to Choose Photo from Device Gallery
+                          <p className="font-bold text-stone-900 text-sm">
+                            Tap to Choose Photos from Device Gallery
                           </p>
-                          <p className="text-[11px] text-stone-500 mt-0.5">
-                            Upload directly from your phone gallery or computer files
+                          <p className="text-xs text-stone-600 mt-0.5">
+                            Select multiple photos at once or one-by-one. <strong>No limit</strong> on number of photos!
                           </p>
+                          <span className="inline-block mt-2 px-3 py-1 bg-amber-800 text-white text-xs font-semibold rounded-md shadow-2xs">
+                            Select Device Photos (JPG / PNG / WEBP)
+                          </span>
                         </div>
                       )}
 
-                      {/* Optional fallback link */}
-                      <div className="pt-1">
+                      {/* Optional: Add photo by Web URL */}
+                      <div className="flex items-center gap-2 pt-1">
                         <input
                           type="url"
-                          placeholder="Or paste an image link (Optional if not uploading from gallery)"
-                          value={imageUrl.startsWith('data:') ? '' : imageUrl}
-                          onChange={(e) => setImageUrl(e.target.value)}
-                          className="w-full px-3 py-1.5 bg-white border border-stone-300 rounded text-[11px] text-stone-700 focus:outline-none focus:border-amber-800"
+                          placeholder="Or paste an image web link (e.g. https://...)"
+                          value={imageUrlInput}
+                          onChange={(e) => setImageUrlInput(e.target.value)}
+                          className="flex-1 px-3 py-1.5 bg-white border border-stone-300 rounded text-xs text-stone-800 focus:outline-none focus:border-amber-800"
                         />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (imageUrlInput.trim()) {
+                              setUploadedImages((prev) => [...prev, imageUrlInput.trim()]);
+                              setImageUrlInput('');
+                              showToast('Added photo link! ✓');
+                            }
+                          }}
+                          className="px-3 py-1.5 bg-stone-800 hover:bg-stone-900 text-white rounded text-xs font-semibold shrink-0 cursor-pointer"
+                        >
+                          + Add Link
+                        </button>
                       </div>
                     </div>
 
@@ -1578,50 +1789,203 @@ export const StoreManagerModal: React.FC = () => {
 
                       <form onSubmit={handleSaveProductEdit} className="space-y-4">
                         
-                        {/* Device Photo Upload for Product Update */}
-                        <div className="p-3 bg-amber-50/60 border border-amber-200 rounded-lg space-y-2">
-                          <label className="block text-stone-800 font-bold text-xs">
-                            Product Photo (Upload / Replace from Device Gallery)
-                          </label>
+                        {/* Device Photo Upload for Product Update (N photos - No limit) */}
+                        <div className="p-3.5 bg-amber-50/70 border border-amber-300 rounded-lg space-y-3">
+                          <div className="flex items-center justify-between">
+                            <label className="block text-stone-800 font-bold text-xs">
+                              Product Photos (Upload N number of photos · No limit)
+                            </label>
+                            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-200/80 text-amber-900 border border-amber-400">
+                              {editImages.length} {editImages.length === 1 ? 'photo' : 'photos'}
+                            </span>
+                          </div>
 
                           <input
                             type="file"
+                            multiple
                             accept="image/*"
                             ref={editFileInputRef}
                             className="hidden"
-                            onChange={(e) => handleDeviceImageUpload(e, (dataUrl) => setEditImage(dataUrl))}
+                            onChange={(e) =>
+                              handleDeviceMultiImageUpload(e, (dataUrls) =>
+                                setEditImages((prev) => [...prev, ...dataUrls])
+                              )
+                            }
                           />
 
-                          <div className="flex items-center gap-4">
-                            <img
-                              src={editImage || editingProduct.images[0]}
-                              alt={editTitle}
-                              className="w-16 h-20 object-cover rounded border border-stone-300 shadow-xs shrink-0"
-                            />
-                            <div className="space-y-1.5 flex-1 min-w-0">
-                              <p className="text-[11px] text-stone-600">
-                                Replace this item's picture with a photo directly from your device gallery.
-                              </p>
-                              <div className="flex items-center gap-2 flex-wrap">
+                          {editImages.length > 0 ? (
+                            <div className="space-y-3">
+                              {/* Grid of photos */}
+                              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2.5">
+                                {editImages.map((img, idx) => (
+                                  <div
+                                    key={idx}
+                                    className={`relative rounded-lg overflow-hidden border-2 bg-white shadow-xs flex flex-col ${
+                                      idx === 0
+                                        ? 'border-amber-600 ring-2 ring-amber-400'
+                                        : 'border-stone-300'
+                                    }`}
+                                  >
+                                    <div className="relative aspect-3/4 w-full bg-stone-100 overflow-hidden">
+                                      <img
+                                        src={img}
+                                        alt={`Product ${idx + 1}`}
+                                        className="w-full h-full object-cover"
+                                      />
+
+                                      {/* Badge */}
+                                      <div className="absolute top-1 left-1 z-10">
+                                        {idx === 0 ? (
+                                          <span className="inline-flex items-center gap-1 bg-amber-700 text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow-xs">
+                                            <Star className="w-2.5 h-2.5 fill-amber-300 text-amber-300" />
+                                            <span>COVER</span>
+                                          </span>
+                                        ) : (
+                                          <span className="bg-stone-900/80 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-xs">
+                                            #{idx + 1}
+                                          </span>
+                                        )}
+                                      </div>
+
+                                      {/* Delete */}
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          removeImageAt(editImages, setEditImages, idx)
+                                        }
+                                        title="Delete photo"
+                                        className="absolute top-1 right-1 p-1 bg-rose-600/90 hover:bg-rose-700 text-white rounded-md shadow-xs cursor-pointer transition-colors"
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </button>
+                                    </div>
+
+                                    {/* Reorder and Cover */}
+                                    <div className="p-1.5 bg-stone-50 border-t border-stone-200 flex items-center justify-between text-[11px]">
+                                      <div className="flex items-center gap-1">
+                                        <button
+                                          type="button"
+                                          disabled={idx === 0}
+                                          onClick={() =>
+                                            moveImage(editImages, setEditImages, idx, idx - 1)
+                                          }
+                                          title="Move earlier"
+                                          className="p-1 rounded text-stone-600 hover:bg-stone-200 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                                        >
+                                          <ChevronLeft className="w-3 h-3" />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          disabled={idx === editImages.length - 1}
+                                          onClick={() =>
+                                            moveImage(editImages, setEditImages, idx, idx + 1)
+                                          }
+                                          title="Move later"
+                                          className="p-1 rounded text-stone-600 hover:bg-stone-200 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                                        >
+                                          <ChevronRight className="w-3 h-3" />
+                                        </button>
+                                      </div>
+
+                                      {idx !== 0 && (
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            setAsCoverPhoto(editImages, setEditImages, idx)
+                                          }
+                                          className="text-[10px] font-bold text-amber-800 hover:underline cursor-pointer"
+                                        >
+                                          Set Cover
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+
+                                {/* Add more tile */}
                                 <button
                                   type="button"
                                   onClick={() => editFileInputRef.current?.click()}
-                                  className="px-3 py-1.5 bg-stone-900 hover:bg-stone-800 text-white rounded text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                                  className="aspect-3/4 rounded-lg border-2 border-dashed border-amber-400 hover:border-amber-700 bg-white/70 hover:bg-amber-100/70 flex flex-col items-center justify-center p-2 text-center cursor-pointer transition-colors"
                                 >
-                                  <Camera className="w-3.5 h-3.5 text-amber-300" />
-                                  <span>Choose Photo from Device Gallery</span>
+                                  <div className="w-7 h-7 rounded-full bg-amber-200 text-amber-900 flex items-center justify-center mb-1">
+                                    <Plus className="w-4 h-4" />
+                                  </div>
+                                  <span className="font-bold text-xs text-amber-900">Add More</span>
+                                  <span className="text-[10px] text-amber-700">No limit</span>
                                 </button>
-                                {editImage && editImage !== editingProduct.images[0] && (
+                              </div>
+
+                              <div className="flex items-center justify-between pt-1 flex-wrap gap-2 text-xs">
+                                <div className="flex items-center gap-2">
                                   <button
                                     type="button"
-                                    onClick={() => setEditImage(editingProduct.images[0])}
-                                    className="px-2.5 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded text-xs cursor-pointer"
+                                    onClick={() => editFileInputRef.current?.click()}
+                                    className="px-3 py-1.5 bg-stone-900 hover:bg-stone-800 text-white rounded text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-xs"
                                   >
-                                    Reset Photo
+                                    <Camera className="w-3.5 h-3.5 text-amber-300" />
+                                    <span>Pick Photos from Device Gallery</span>
                                   </button>
-                                )}
+                                  {editingProduct && (
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setEditImages(
+                                          Array.isArray(editingProduct.images)
+                                            ? [...editingProduct.images]
+                                            : []
+                                        )
+                                      }
+                                      className="px-2.5 py-1.5 bg-stone-200 hover:bg-stone-300 text-stone-700 rounded text-xs cursor-pointer"
+                                    >
+                                      Reset to Original
+                                    </button>
+                                  )}
+                                </div>
+                                <span className="text-[11px] text-stone-600">
+                                  Add unlimited photos. 1st is the main cover.
+                                </span>
                               </div>
                             </div>
+                          ) : (
+                            <div
+                              onClick={() => editFileInputRef.current?.click()}
+                              className="p-6 border-2 border-dashed border-amber-300 hover:border-amber-800 bg-white/80 rounded-lg text-center cursor-pointer transition-colors"
+                            >
+                              <div className="w-10 h-10 mx-auto rounded-full bg-amber-100 text-amber-800 flex items-center justify-center mb-1.5">
+                                <Upload className="w-5 h-5" />
+                              </div>
+                              <p className="font-bold text-stone-900 text-xs">
+                                Tap to Choose Photos from Device Gallery
+                              </p>
+                              <p className="text-[11px] text-stone-500 mt-0.5">
+                                Upload 1 or multiple photos with no limit
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Optional: Add photo by Web URL */}
+                          <div className="flex items-center gap-2 pt-1">
+                            <input
+                              type="url"
+                              placeholder="Or paste an image web link (e.g. https://...)"
+                              value={editImageUrlInput}
+                              onChange={(e) => setEditImageUrlInput(e.target.value)}
+                              className="flex-1 px-3 py-1.5 bg-white border border-stone-300 rounded text-xs text-stone-800 focus:outline-none focus:border-amber-800"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (editImageUrlInput.trim()) {
+                                  setEditImages((prev) => [...prev, editImageUrlInput.trim()]);
+                                  setEditImageUrlInput('');
+                                  showToast('Added photo link! ✓');
+                                }
+                              }}
+                              className="px-3 py-1.5 bg-stone-800 hover:bg-stone-900 text-white rounded text-xs font-semibold shrink-0 cursor-pointer"
+                            >
+                              + Add Link
+                            </button>
                           </div>
                         </div>
 
