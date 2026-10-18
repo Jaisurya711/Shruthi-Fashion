@@ -269,25 +269,11 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToShop, onBack
         console.warn('Backend order call notice:', backendErr);
       }
 
-      // If simulated fallback or test mode returned
-      if (orderData?.isSimulated) {
-        placeOrder({
-          address: shippingAddress,
-          paymentMethod: 'Razorpay',
-          paymentDetails: {
-            razorpayPaymentId: `pay_sim_${Date.now()}`,
-            razorpayOrderId: orderData.order_id,
-            razorpaySignature: 'simulated_test_signature'
-          }
-        });
-        setIsCheckoutOpen(false);
-        return;
-      }
-
-      // Key ID resolution
+      // Resolve Razorpay Key ID
       const razorpayKey =
-        orderData?.key_id ||
+        (customKeyId && customKeyId.trim()) ||
         storeBank.razorpayKeyId ||
+        orderData?.key_id ||
         (import.meta as any).env?.VITE_RAZORPAY_KEY_ID ||
         'rzp_test_Tmzltbt8uaWUPE';
 
@@ -298,7 +284,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToShop, onBack
         name: 'Shruthi Fashion',
         description: 'Online Payment · Shruthi Fashion Coimbatore',
         image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=128&q=80',
-        ...(orderData?.order_id ? { order_id: orderData.order_id } : {}),
+        ...(orderData?.order_id && !orderData.order_id.startsWith('order_sim_') && !orderData.order_id.startsWith('order_test_') ? { order_id: orderData.order_id } : {}),
         handler: async function (response: {
           razorpay_payment_id: string;
           razorpay_order_id?: string;
