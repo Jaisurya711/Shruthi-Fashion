@@ -390,48 +390,21 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
                 </div>
 
                 {/* The Physical Courier Sticker Box */}
-                <div className="border-3 border-black p-4 sm:p-5 bg-white space-y-4 text-black font-sans">
+                <div className="border-3 border-black p-5 sm:p-6 bg-white space-y-6 text-black font-sans">
                   
-                  {/* TOP ROW: [TOP LEFT: Courier / Booking Details] & [TOP RIGHT CORNER: TO ADDRESS] */}
-                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 pb-3 border-b-2 border-black">
+                  {/* TOP ROW: [TOP RIGHT CORNER: TO ADDRESS] */}
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 pb-6 border-b-2 border-black items-start">
                     
-                    {/* TOP LEFT (5 cols): Courier Service & Booking Meta */}
-                    <div className="sm:col-span-5 flex flex-col justify-between pr-2 border-b sm:border-b-0 sm:border-r-2 border-black pb-3 sm:pb-0">
-                      <div>
-                        {/* Courier Dispatch Stamp */}
-                        <div className="inline-block px-2.5 py-1 bg-red-600 text-white font-black text-xs uppercase tracking-wider rounded-xs mb-2">
-                          SPEED COURIER / AIR CARGO
-                        </div>
-                        <div className="text-[11px] leading-tight font-semibold text-stone-800 space-y-0.5">
-                          <p><strong className="text-black">SERVICE:</strong> SURFACE APPAREL</p>
-                          <p><strong className="text-black">DATE:</strong> {order?.date || new Date().toISOString().split('T')[0]}</p>
-                          <p><strong className="text-black">ORDER ID:</strong> #{labelOrderNo}</p>
-                          <p><strong className="text-black">PIECES:</strong> {labelPieces} {labelPieces === 1 ? 'Item' : 'Items'}</p>
-                          <p><strong className="text-black">WEIGHT:</strong> ~{labelWeight} KG</p>
-                        </div>
-                      </div>
+                    {/* TOP LEFT: Clean space */}
+                    <div className="hidden sm:block sm:col-span-4" />
 
-                      {/* Payment Status Stamp */}
-                      <div className="mt-3 pt-2 border-t border-black/40">
-                        {isCod ? (
-                          <div className="px-2 py-1 bg-amber-50 border-2 border-amber-700 text-amber-900 text-center font-black text-xs uppercase">
-                            COLLECT CASH: ₹{codAmount}
-                          </div>
-                        ) : (
-                          <div className="px-2 py-1 bg-emerald-50 border-2 border-black text-black text-center font-black text-xs uppercase tracking-wider">
-                            PREPAID · DO NOT COLLECT CASH
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* TOP RIGHT CORNER (7 cols): TO ADDRESS */}
-                    <div className="sm:col-span-7 pl-0 sm:pl-3 space-y-1">
-                      <div className="flex items-center justify-between border-b border-black pb-1 mb-1.5">
+                    {/* TOP RIGHT CORNER: TO ADDRESS */}
+                    <div className="sm:col-span-8 pl-0 sm:pl-4 space-y-1">
+                      <div className="flex items-center justify-between border-b-2 border-black pb-1 mb-2">
                         <span className="font-black text-sm uppercase tracking-wider text-black">
                           TO ADDRESS:
                         </span>
-                        <span className="text-[10px] font-bold bg-black text-white px-1.5 py-0.5 uppercase">
+                        <span className="text-[10px] font-black bg-black text-white px-2 py-0.5 uppercase tracking-wider">
                           DESTINATION
                         </span>
                       </div>
@@ -439,30 +412,30 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
                       <div className="text-sm font-black uppercase text-black tracking-wide leading-tight">
                         TO,
                       </div>
-                      <div className="text-base font-black uppercase text-black leading-snug">
+                      <div className="text-lg font-black uppercase text-black leading-snug">
                         {toAddress.fullName || 'CUSTOMER'}
                       </div>
 
-                      <div className="text-xs font-bold text-black leading-tight space-y-0.5 pt-0.5">
+                      <div className="text-sm font-bold text-black leading-tight space-y-0.5 pt-1">
                         <p>{toAddress.street}</p>
                         <p>{toAddress.area}</p>
                         <p className="uppercase">{toAddress.city}, {toAddress.state || 'Tamil Nadu'}</p>
                       </div>
 
                       {/* Highlighted PIN & Contact */}
-                      <div className="pt-2 mt-2 border-t-2 border-black space-y-1">
+                      <div className="pt-2.5 mt-2.5 border-t-2 border-black space-y-1.5">
                         <div className="flex items-baseline justify-between">
                           <span className="text-xs font-black uppercase text-black">
                             PIN CODE:
                           </span>
-                          <span className="font-mono text-xl sm:text-2xl font-black text-black tracking-widest bg-yellow-100/80 px-2 py-0.5 border border-black/30 rounded-xs">
+                          <span className="font-mono text-2xl font-black text-black tracking-widest bg-yellow-100/90 px-3 py-0.5 border border-black/40 rounded-xs">
                             {toAddress.pincode || '641030'}
                           </span>
                         </div>
 
                         <div className="flex items-center justify-between text-xs pt-1">
                           <span className="font-bold text-black">PH / MOBILE:</span>
-                          <span className="font-mono text-sm font-black text-black">
+                          <span className="font-mono text-sm font-black text-black tracking-wide">
                             {toAddress.phone || '9962278349'}
                           </span>
                         </div>
@@ -471,62 +444,32 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
 
                   </div>
 
-                  {/* BOTTOM ROW: [LEFT BOTTOM: DEFAULT FROM ADDRESS] & [BOTTOM RIGHT: BARCODE & ROUTING] */}
-                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-1 items-start">
+                  {/* BOTTOM ROW: [LEFT BOTTOM: DEFAULT FROM ADDRESS] */}
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 pt-1 items-start">
                     
                     {/* LEFT BOTTOM DEFAULT ADDRESS (EXACT WORD-FOR-WORD AS REQUESTED) */}
-                    <div className="sm:col-span-6 pr-0 sm:pr-3 border-b sm:border-b-0 sm:border-r-2 border-black pb-3 sm:pb-0 space-y-0.5 text-xs font-semibold text-black leading-snug">
-                      <p className="font-black text-sm uppercase tracking-wider border-b border-black pb-1 mb-1">
+                    <div className="sm:col-span-7 pr-0 sm:pr-4 space-y-1 text-sm font-semibold text-black leading-snug">
+                      <p className="font-black text-sm uppercase tracking-wider border-b-2 border-black pb-1 mb-2">
                         FROM ADDRESS:
                       </p>
                       
                       <p className="font-black text-xs uppercase">FROM,</p>
-                      <p className="font-black text-sm uppercase text-black tracking-wide">
+                      <p className="font-black text-base uppercase text-black tracking-wide">
                         SHRUTHI FASHION
                       </p>
                       <p>1st floor (City cake shop)</p>
                       <p>edayarpalayam road,</p>
                       <p>Kovundampalayam,</p>
                       <p>Coimbatore. TN</p>
-                      <p className="font-mono font-bold text-xs mt-1">pin code:641030</p>
-                      <p className="font-mono font-bold text-xs">Ph:9962278349</p>
+                      <p className="font-mono font-bold text-sm mt-1">pin code:641030</p>
+                      <p className="font-mono font-bold text-sm">Ph:9962278349</p>
                     </div>
 
-                    {/* BOTTOM RIGHT: BARCODE, AWB ROUTING & INSTRUCTIONS */}
-                    <div className="sm:col-span-6 pl-0 sm:pl-2 flex flex-col justify-between text-center space-y-2">
-                      <p className="text-[10px] font-black uppercase tracking-wider text-stone-700">
-                        COURIER TRACKING / AWB ROUTING
-                      </p>
-
-                      {/* Scannable Visual Barcode */}
-                      <div className="py-2 px-1 flex items-center justify-center gap-[2px] h-12 bg-white border border-black rounded-xs">
-                        {barcodePattern.map((width, i) => (
-                          <span
-                            key={i}
-                            className="bg-black h-8 inline-block"
-                            style={{ width: `${Math.min(width * 2, 6)}px` }}
-                          />
-                        ))}
-                      </div>
-
-                      <p className="font-mono font-black text-xs tracking-widest text-black">
-                        AWB: {order?.trackingNumber || `SF-${toAddress.pincode || '641030'}-${labelOrderNo}`}
-                      </p>
-
-                      <div className="pt-1 border-t border-black/40 text-[10px] font-bold text-stone-800 uppercase flex justify-between">
-                        <span>DEST: {toAddress.city || 'COIMBATORE'}</span>
-                        <span className="text-red-700">HANDLE WITH CARE</span>
-                      </div>
-                    </div>
+                    {/* Bottom Right: Clean space */}
+                    <div className="hidden sm:block sm:col-span-5" />
 
                   </div>
 
-                </div>
-
-                {/* Footer dispatch tag */}
-                <div className="pt-2 text-[10px] text-stone-500 flex justify-between uppercase font-mono">
-                  <span>Shruthi Fashion Coimbatore · Dispatch Dept</span>
-                  <span>Printed via Shruthi Fashion Portal</span>
                 </div>
 
               </div>
