@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Product, CartItem, UserProfile, UserOrder, Address, FilterState, StoreBankDetails, HeroConfig } from '../types/store';
 import { INITIAL_PRODUCTS, getStoreBankDetails, DEFAULT_STORE_CATEGORIES, DEFAULT_STORE_SUBCATEGORIES, HERO_IMAGE } from '../data/products';
 import { sendOrderNotificationEmail } from '../services/notificationService';
+import { fetchLatestCatalogFromCloud, syncCatalogToCloud } from '../services/catalogSyncService';
 
 interface StoreContextType {
   products: Product[];
@@ -72,6 +73,8 @@ interface StoreContextType {
   updateProduct: (product: Product) => void;
   deleteProduct: (id: string) => void;
   resetProductsToDefault: () => void;
+  syncCatalog: () => Promise<any>;
+  setProductsList: (products: Product[]) => void;
 }
 
 export function normalizeProduct(p: any): Product {
@@ -158,6 +161,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     return INITIAL_PRODUCTS.map(normalizeProduct);
   });
+
+  // Automatically fetch cloud-synced catalog on load so products added on any device reflect across all devices
+  useEffect(() => {
+    fetchLatestCatalogFromCloud().then((cloudProducts) => {
+      if (Array.isArray(cloudProducts) && cloudProducts.length > 0) {
+        setProducts(cloudProducts.map(normalizeProduct));
+      }
+    });
+  }, []);
 
   const [filters, setFilterState] = useState<FilterState>(defaultFilters);
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
@@ -451,10 +463,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  // Sync products to local storage
+  // Sync products to local storage & cloud
   useEffect(() => {
     try {
       localStorage.setItem('shruthi_fashion_products', JSON.stringify(products));
+      syncCatalogToCloud(products);
     } catch (e) {
       console.warn('LocalStorage save failed:', e);
     }
@@ -629,6 +642,16 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     } catch (e) {
       console.warn(e);
     }
+  };
+
+  const syncCatalog = async () => {
+    return await syncCatalogToCloud(products);
+  };
+
+  const setProductsList = (newProds: Product[]) => {
+    const normalized = newProds.map(normalizeProduct);
+    setProducts(normalized);
+    syncCatalogToCloud(normalized);
   };
 
   // User auth operations
@@ -862,6 +885,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         updateProduct,
         deleteProduct,
         resetProductsToDefault,
+        syncCatalog,
+        setProductsList,
       }}
     >
       {children}

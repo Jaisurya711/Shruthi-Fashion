@@ -201,6 +201,37 @@ app.post('/api/verify-payment', (req, res) => {
   }
 });
 
+// STEP 2B: Product Catalog Synchronization API (Multi-Device Sync)
+let cachedProducts: any[] | null = null;
+let catalogLastUpdated: number = Date.now();
+
+app.get('/api/products', (req, res) => {
+  return res.status(200).json({
+    success: true,
+    products: cachedProducts,
+    lastUpdated: catalogLastUpdated,
+  });
+});
+
+app.post('/api/products', (req, res) => {
+  try {
+    const { products } = req.body || {};
+    if (Array.isArray(products) && products.length > 0) {
+      cachedProducts = products;
+      catalogLastUpdated = Date.now();
+      return res.status(200).json({
+        success: true,
+        count: products.length,
+        lastUpdated: catalogLastUpdated,
+        message: 'Catalog updated successfully and will be served to all devices.'
+      });
+    }
+    return res.status(400).json({ success: false, error: 'Products array is required.' });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message || 'Failed to update products' });
+  }
+});
+
 // STEP 3: OTP Mobile Registration Service
 const OTP_SECRET = (
   process.env.OTP_SECRET ||

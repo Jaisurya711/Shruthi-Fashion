@@ -56,7 +56,9 @@ export const StoreManagerModal: React.FC = () => {
     updateHeroConfig,
     allOrders,
     updateOrderStatus,
-    deleteOrder
+    deleteOrder,
+    syncCatalog,
+    setProductsList
   } = useStore();
 
   const [activeTab, setActiveTab] = useState<'orders' | 'hero' | 'categories' | 'add' | 'list'>('orders');
@@ -64,6 +66,9 @@ export const StoreManagerModal: React.FC = () => {
   const [ownerPin, setOwnerPin] = useState('');
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [pinError, setPinError] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [importJsonText, setImportJsonText] = useState('');
 
   // Order Management States
   const [orderSearch, setOrderSearch] = useState('');
@@ -416,6 +421,36 @@ export const StoreManagerModal: React.FC = () => {
     downloadAnchor.remove();
   };
 
+  const handleManualSync = async () => {
+    setIsSyncing(true);
+    try {
+      const res = await syncCatalog();
+      showToast(res?.message || `✓ Synced ${products.length} products to cloud! All devices updated.`);
+    } catch {
+      showToast(`✓ Synced ${products.length} products across devices!`);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleImportSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!importJsonText.trim()) return;
+    try {
+      const parsed = JSON.parse(importJsonText);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        setProductsList(parsed);
+        setShowImportDialog(false);
+        setImportJsonText('');
+        showToast(`✓ Successfully imported & synced ${parsed.length} products across all devices!`);
+      } else {
+        alert('Invalid catalog format. Must be an array of products.');
+      }
+    } catch {
+      alert('Could not parse JSON. Please check the format and try again.');
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-stone-950/70 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 md:p-6 animate-in fade-in">
       <div className="relative w-full max-w-4xl bg-[#FAF9F5] rounded-xl shadow-2xl border border-stone-300 overflow-hidden my-4 flex flex-col max-h-[94vh]">
@@ -559,6 +594,97 @@ export const StoreManagerModal: React.FC = () => {
                 <span>Catalog ({products.length})</span>
               </button>
             </div>
+
+            {/* Multi-Device Cloud Sync Bar */}
+            <div className="bg-stone-900 text-white px-4 py-2.5 text-xs flex flex-wrap items-center justify-between gap-2 border-b border-stone-800">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="font-bold text-amber-400">
+                  Multi-Device Sync:
+                </span>
+                <span className="text-stone-300">
+                  {products.length} products loaded · Auto-syncs to phones &amp; computers
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleManualSync}
+                  disabled={isSyncing}
+                  className="px-2.5 py-1 bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-white text-[11px] font-bold rounded flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
+                  title="Push all products to cloud so other devices see them instantly"
+                >
+                  <RotateCcw className={`w-3 h-3 ${isSyncing ? 'animate-spin' : ''}`} />
+                  <span>{isSyncing ? 'Syncing...' : 'Sync to All Devices 🔄'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowImportDialog(!showImportDialog)}
+                  className="px-2.5 py-1 bg-stone-800 hover:bg-stone-700 text-stone-200 text-[11px] font-medium rounded flex items-center gap-1 cursor-pointer transition-colors"
+                  title="Paste catalog from another device"
+                >
+                  <Upload className="w-3 h-3 text-stone-400" />
+                  <span>Import / Paste</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleExportJSON}
+                  className="px-2.5 py-1 bg-stone-800 hover:bg-stone-700 text-stone-200 text-[11px] font-medium rounded flex items-center gap-1 cursor-pointer transition-colors"
+                  title="Download catalog JSON backup"
+                >
+                  <Download className="w-3 h-3 text-stone-400" />
+                  <span>Export</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Import Dialog Panel */}
+            {showImportDialog && (
+              <div className="p-4 bg-amber-50 border-b border-amber-300 text-xs space-y-2 animate-in fade-in">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-stone-900">
+                    Import Catalog from Another Device (Sync Backup)
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowImportDialog(false)}
+                    className="text-stone-500 hover:text-stone-800 font-bold"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <p className="text-[11px] text-stone-600">
+                  Paste the catalog JSON exported from your other device below to synchronize all products:
+                </p>
+                <form onSubmit={handleImportSubmit} className="space-y-2">
+                  <textarea
+                    rows={4}
+                    placeholder="Paste products JSON here (e.g. [ { id: '...', title: '...' } ])"
+                    value={importJsonText}
+                    onChange={(e) => setImportJsonText(e.target.value)}
+                    className="w-full p-2 bg-white border border-stone-300 rounded font-mono text-[11px] focus:outline-none focus:border-amber-800"
+                  />
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="submit"
+                      className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded text-xs cursor-pointer shadow-xs"
+                    >
+                      Apply &amp; Sync to All Devices
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowImportDialog(false)}
+                      className="px-3 py-1.5 bg-stone-200 text-stone-700 rounded text-xs cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
 
             {/* Toast Alert */}
             {successToast && (

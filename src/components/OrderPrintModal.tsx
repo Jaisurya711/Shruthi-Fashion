@@ -155,8 +155,8 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-stone-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in">
-      <div className="relative w-full max-w-3xl bg-white rounded-xl shadow-2xl border border-stone-300 flex flex-col max-h-[94vh] overflow-hidden my-auto">
+    <div className="order-print-modal-overlay fixed inset-0 z-50 overflow-y-auto bg-stone-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in">
+      <div className="order-print-modal-container relative w-full max-w-4xl bg-white rounded-xl shadow-2xl border border-stone-300 flex flex-col max-h-[94vh] overflow-hidden my-auto">
         
         {/* Top Control Bar (Hidden during print) */}
         <div className="p-3 sm:p-4 bg-stone-900 text-white flex flex-wrap items-center justify-between gap-2.5 no-print border-b border-stone-800">
@@ -363,17 +363,17 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
         )}
 
         {/* Scrollable Document Preview Area */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-stone-100/70">
-          <div className="printable-document bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-stone-200 max-w-2xl mx-auto text-stone-900 font-sans">
+        <div className="order-print-content-scroll flex-1 overflow-y-auto p-3 sm:p-6 bg-stone-100/70">
+          <div className="printable-document bg-white p-2 sm:p-4 rounded-lg shadow-sm border border-stone-200 max-w-4xl mx-auto text-stone-900 font-sans">
             
-            {/* VIEW 1: COURIER DELIVERY SHIPPING LABEL (PHYSICAL COURIER PARCEL STICKER) */}
+            {/* VIEW 1: COURIER DELIVERY SHIPPING LABEL (PHYSICAL COURIER PARCEL STICKER - LANDSCAPE 1-PAGE) */}
             {view === 'courier_label' && (
               <div className="courier-shipping-label border-2 border-dashed border-stone-400 p-2 sm:p-3 rounded-lg bg-white">
                 
-                {/* Cut helper notice (visible in web preview) */}
+                {/* Cut helper notice (visible in web preview, hidden on print) */}
                 <div className="no-print flex items-center justify-between text-[11px] text-stone-500 pb-2 mb-2 border-b border-stone-200">
                   <span className="flex items-center gap-1">
-                    <Scissors className="w-3.5 h-3.5" /> Cut along dashed border to stick on courier polybag / parcel
+                    <Scissors className="w-3.5 h-3.5" /> Cut along dashed line to stick on parcel / polybag
                   </span>
                   <div className="flex items-center gap-2">
                     <button
@@ -385,23 +385,56 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
                       <span>Edit TO Address from WhatsApp</span>
                     </button>
                     <span className="text-stone-300">|</span>
-                    <span className="font-semibold text-stone-700">4×6" Label</span>
+                    <span className="font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 text-[10px]">
+                      🖨️ Landscape Mode (1 Sheet · A5 / 4×6")
+                    </span>
                   </div>
                 </div>
 
-                {/* The Physical Courier Sticker Box */}
-                <div className="border-3 border-black p-5 sm:p-6 bg-white space-y-6 text-black font-sans">
+                {/* The Physical Courier Sticker Box - Optimized for LANDSCAPE 1-Page Print */}
+                <div className="landscape-courier-box border-3 border-black p-4 sm:p-5 bg-white text-black font-sans">
                   
-                  {/* TOP ROW: [TOP RIGHT CORNER: TO ADDRESS] */}
-                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 pb-6 border-b-2 border-black items-start">
+                  {/* 2-COLUMN LANDSCAPE GRID: LEFT = FROM (BOTTOM LEFT), RIGHT = TO (TOP RIGHT) */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 items-stretch">
                     
-                    {/* TOP LEFT: Clean space */}
-                    <div className="hidden sm:block sm:col-span-4" />
+                    {/* LEFT COLUMN: FROM ADDRESS (Positioned at bottom-left) */}
+                    <div className="flex flex-col justify-between border-b-2 md:border-b-0 md:border-r-2 border-black pr-0 md:pr-4 pb-3 md:pb-0">
+                      
+                      {/* Top Header for Sender Column */}
+                      <div className="pb-1 mb-2 border-b border-black/30 flex items-center justify-between">
+                        <span className="font-black text-xs uppercase tracking-wider text-black">
+                          FROM ADDRESS:
+                        </span>
+                        <span className="text-[9px] font-black uppercase bg-stone-100 text-stone-800 px-1.5 py-0.5 border border-black/20">
+                          COIMBATORE HUB
+                        </span>
+                      </div>
 
-                    {/* TOP RIGHT CORNER: TO ADDRESS */}
-                    <div className="sm:col-span-8 pl-0 sm:pl-4 space-y-1">
-                      <div className="flex items-center justify-between border-b-2 border-black pb-1 mb-2">
-                        <span className="font-black text-sm uppercase tracking-wider text-black">
+                      {/* Spacer to push FROM address to bottom-left */}
+                      <div className="hidden md:block flex-1 min-h-[20px]" />
+
+                      {/* LEFT BOTTOM DEFAULT ADDRESS (EXACT WORD-FOR-WORD AS REQUESTED) */}
+                      <div className="space-y-0.5 text-xs sm:text-sm font-semibold text-black leading-snug">
+                        <p className="font-black text-xs uppercase text-stone-700">FROM,</p>
+                        <p className="font-black text-base sm:text-lg uppercase text-black tracking-wide">
+                          SHRUTHI FASHION
+                        </p>
+                        <p>1st floor (City cake shop)</p>
+                        <p>edayarpalayam road,</p>
+                        <p>Kovundampalayam,</p>
+                        <p>Coimbatore. TN</p>
+                        <p className="font-mono font-bold text-sm mt-1">pin code:641030</p>
+                        <p className="font-mono font-bold text-sm">Ph:9962278349</p>
+                      </div>
+
+                    </div>
+
+                    {/* RIGHT COLUMN: TO ADDRESS (Positioned at top-right corner) */}
+                    <div className="flex flex-col justify-start pl-0 md:pl-2 space-y-1.5">
+                      
+                      {/* Top Header for Destination */}
+                      <div className="flex items-center justify-between border-b-2 border-black pb-1 mb-1">
+                        <span className="font-black text-xs sm:text-sm uppercase tracking-wider text-black">
                           TO ADDRESS:
                         </span>
                         <span className="text-[10px] font-black bg-black text-white px-2 py-0.5 uppercase tracking-wider">
@@ -409,64 +442,39 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
                         </span>
                       </div>
 
-                      <div className="text-sm font-black uppercase text-black tracking-wide leading-tight">
+                      <div className="text-xs font-black uppercase text-black tracking-wide leading-tight">
                         TO,
                       </div>
-                      <div className="text-lg font-black uppercase text-black leading-snug">
+                      <div className="text-base sm:text-lg font-black uppercase text-black leading-snug">
                         {toAddress.fullName || 'CUSTOMER'}
                       </div>
 
-                      <div className="text-sm font-bold text-black leading-tight space-y-0.5 pt-1">
+                      <div className="text-xs sm:text-sm font-bold text-black leading-tight space-y-0.5 pt-0.5">
                         <p>{toAddress.street}</p>
                         <p>{toAddress.area}</p>
                         <p className="uppercase">{toAddress.city}, {toAddress.state || 'Tamil Nadu'}</p>
                       </div>
 
                       {/* Highlighted PIN & Contact */}
-                      <div className="pt-2.5 mt-2.5 border-t-2 border-black space-y-1.5">
+                      <div className="pt-2 mt-2 border-t-2 border-black space-y-1.5">
                         <div className="flex items-baseline justify-between">
                           <span className="text-xs font-black uppercase text-black">
                             PIN CODE:
                           </span>
-                          <span className="font-mono text-2xl font-black text-black tracking-widest bg-yellow-100/90 px-3 py-0.5 border border-black/40 rounded-xs">
+                          <span className="font-mono text-xl sm:text-2xl font-black text-black tracking-widest bg-yellow-100/90 px-3 py-0.5 border border-black/40 rounded-xs">
                             {toAddress.pincode || '641030'}
                           </span>
                         </div>
 
-                        <div className="flex items-center justify-between text-xs pt-1">
+                        <div className="flex items-center justify-between text-xs pt-0.5">
                           <span className="font-bold text-black">PH / MOBILE:</span>
                           <span className="font-mono text-sm font-black text-black tracking-wide">
                             {toAddress.phone || '9962278349'}
                           </span>
                         </div>
                       </div>
+
                     </div>
-
-                  </div>
-
-                  {/* BOTTOM ROW: [LEFT BOTTOM: DEFAULT FROM ADDRESS] */}
-                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 pt-1 items-start">
-                    
-                    {/* LEFT BOTTOM DEFAULT ADDRESS (EXACT WORD-FOR-WORD AS REQUESTED) */}
-                    <div className="sm:col-span-7 pr-0 sm:pr-4 space-y-1 text-sm font-semibold text-black leading-snug">
-                      <p className="font-black text-sm uppercase tracking-wider border-b-2 border-black pb-1 mb-2">
-                        FROM ADDRESS:
-                      </p>
-                      
-                      <p className="font-black text-xs uppercase">FROM,</p>
-                      <p className="font-black text-base uppercase text-black tracking-wide">
-                        SHRUTHI FASHION
-                      </p>
-                      <p>1st floor (City cake shop)</p>
-                      <p>edayarpalayam road,</p>
-                      <p>Kovundampalayam,</p>
-                      <p>Coimbatore. TN</p>
-                      <p className="font-mono font-bold text-sm mt-1">pin code:641030</p>
-                      <p className="font-mono font-bold text-sm">Ph:9962278349</p>
-                    </div>
-
-                    {/* Bottom Right: Clean space */}
-                    <div className="hidden sm:block sm:col-span-5" />
 
                   </div>
 

@@ -123,9 +123,15 @@ export const AuthModal: React.FC = () => {
     e.preventDefault();
     setErrorMsg('');
 
-    // Name validation
-    if (!name.trim()) {
-      setErrorMsg('Please enter your full name.');
+    // Name validation: Strictly alphabets and spaces only
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      setErrorMsg('Please enter your user name.');
+      return;
+    }
+
+    if (!/^[a-zA-Z\s]+$/.test(trimmedName)) {
+      setErrorMsg('Login user name allows only alphabets (A-Z, a-z). Numbers and special characters are not allowed.');
       return;
     }
 
@@ -241,19 +247,35 @@ export const AuthModal: React.FC = () => {
               {/* Customer Name */}
               <div>
                 <label className="block text-stone-800 font-semibold mb-1">
-                  Customer Name (User Name)
+                  Customer Name (User Name) <span className="text-amber-800 font-medium text-[11px]">(Alphabets Only)</span>
                 </label>
                 <div className="relative">
                   <User className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     required
-                    placeholder="Enter your full name"
+                    placeholder="Enter name (alphabets only, e.g. Priya Anand)"
                     value={name}
-                    onChange={(e) => setName(e.target.value.replace(/[^a-zA-Z\s]/g, ''))}
+                    pattern="[a-zA-Z\s]+"
+                    title="User name must contain only alphabets and spaces"
+                    onKeyDown={(e) => {
+                      if (['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+                        return;
+                      }
+                      if (!/^[a-zA-Z]$/.test(e.key) && !e.ctrlKey && !e.metaKey) {
+                        e.preventDefault();
+                      }
+                    }}
+                    onChange={(e) => {
+                      const onlyLetters = e.target.value.replace(/[^a-zA-Z\s]/g, '');
+                      setName(onlyLetters);
+                    }}
                     className="w-full pl-9 pr-3 py-2.5 bg-white border border-stone-300 rounded-md text-stone-900 placeholder:text-stone-400 focus:outline-none focus:border-amber-800 focus:ring-1 focus:ring-amber-800"
                   />
                 </div>
+                <p className="text-[10px] text-stone-500 mt-1">
+                  Only alphabetic letters (A-Z, a-z) allowed. Numbers and symbols are disabled.
+                </p>
               </div>
 
               {/* Mobile Number */}
