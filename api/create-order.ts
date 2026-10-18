@@ -18,8 +18,8 @@ export default async function handler(req: any, res: any) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const key_id = (process.env.RAZORPAY_KEY_ID || 'rzp_test_Tmzltbt8uaWUPE').trim();
-  const key_secret = (process.env.RAZORPAY_KEY_SECRET || 'h2OiBJcNsTNUIWh9Uj0073Y0').trim();
+  const key_id = (process.env.RAZORPAY_KEY_ID || 'rzp_live_TpGh87ZFgGUGsI').trim();
+  const key_secret = (process.env.RAZORPAY_KEY_SECRET || 'NbW6Xt7zLCtJfNcLt4rcm6ld').trim();
 
   try {
     const { amount, currency = 'INR', receipt, customKeyId, customKeySecret, simulate } = req.body || {};

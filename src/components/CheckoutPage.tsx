@@ -73,8 +73,8 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToShop, onBack
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [showKeyConfig, setShowKeyConfig] = useState(false);
-  const [customKeyId, setCustomKeyId] = useState(storeBank.razorpayKeyId || '');
-  const [customKeySecret, setCustomKeySecret] = useState(storeBank.razorpayKeySecret || '');
+  const [customKeyId, setCustomKeyId] = useState(storeBank.razorpayKeyId || 'rzp_live_TpGh87ZFgGUGsI');
+  const [customKeySecret, setCustomKeySecret] = useState(storeBank.razorpayKeySecret || 'NbW6Xt7zLCtJfNcLt4rcm6ld');
   const [savedKeySuccess, setSavedKeySuccess] = useState(false);
 
   // Sync address when user changes
@@ -275,7 +275,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToShop, onBack
         storeBank.razorpayKeyId ||
         orderData?.key_id ||
         (import.meta as any).env?.VITE_RAZORPAY_KEY_ID ||
-        'rzp_test_Tmzltbt8uaWUPE';
+        'rzp_live_TpGh87ZFgGUGsI';
 
       const options: any = {
         key: razorpayKey,

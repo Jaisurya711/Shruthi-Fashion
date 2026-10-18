@@ -21,8 +21,8 @@ export const STORE_BANK_DETAILS = {
   upiId: '9894088349@upi',
   gpayNumber: '9894088349',
   phonePeNumber: '9894088349',
-  razorpayKeyId: 'rzp_test_Tmzltbt8uaWUPE',
-  razorpayKeySecret: 'h2OiBJcNsTNUIWh9Uj0073Y0',
+  razorpayKeyId: 'rzp_live_TpGh87ZFgGUGsI',
+  razorpayKeySecret: 'NbW6Xt7zLCtJfNcLt4rcm6ld',
   razorpayPaymentPageUrl: 'https://pages.razorpay.com/shruthifashion',
   useRazorpay: true
 };
@@ -32,18 +32,20 @@ export function getStoreBankDetails() {
     const saved = localStorage.getItem('shruthi_custom_bank_details');
     if (saved) {
       const parsed = JSON.parse(saved);
-      // Migrate or update if previously saved with old keys or placeholders
+      // Migrate or update if previously saved with old test keys or placeholders
       if (
         !parsed.razorpayKeyId ||
         parsed.razorpayKeyId === 'rzp_test_TmbjwATi5Eejog' ||
+        parsed.razorpayKeyId === 'rzp_test_Tmzltbt8uaWUPE' ||
         parsed.razorpayKeyId === 'rzp_live_shruthifashion' ||
         parsed.razorpayKeyId === 'rzp_live_TmcCNE03TUNIYQ' ||
         !parsed.razorpayKeySecret ||
+        parsed.razorpayKeySecret === 'h2OiBJcNsTNUIWh9Uj0073Y0' ||
         parsed.razorpayKeySecret === 'cB6xF8f2HnkIu7wSt9EWBGHP' ||
         parsed.razorpayKeySecret === 'aPcQhngZB5nJ9Khu7nbUzyCL'
       ) {
-        parsed.razorpayKeyId = 'rzp_test_Tmzltbt8uaWUPE';
-        parsed.razorpayKeySecret = 'h2OiBJcNsTNUIWh9Uj0073Y0';
+        parsed.razorpayKeyId = 'rzp_live_TpGh87ZFgGUGsI';
+        parsed.razorpayKeySecret = 'NbW6Xt7zLCtJfNcLt4rcm6ld';
       }
       return { ...STORE_BANK_DETAILS, ...parsed };
     }

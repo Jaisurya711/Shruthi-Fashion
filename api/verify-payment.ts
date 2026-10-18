@@ -17,7 +17,7 @@ export default async function handler(req: any, res: any) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const key_secret = (process.env.RAZORPAY_KEY_SECRET || 'h2OiBJcNsTNUIWh9Uj0073Y0').trim();
+  const key_secret = (process.env.RAZORPAY_KEY_SECRET || 'NbW6Xt7zLCtJfNcLt4rcm6ld').trim();
 
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, customKeySecret } = req.body || {};
