@@ -54,13 +54,25 @@
   background: #a8a29e;
 }
 
-/* Print Styling for E-Commerce Bill & Courier Labels (Landscape Mode) */
+/* Print Styling for Courier Delivery Labels (Strict A5 Landscape Mode) & Invoices */
 @media print {
   @page {
-    size: landscape;
+    size: A5 landscape;
     margin: 5mm;
   }
 
+  /* Completely hide the main application root and all background content when printing */
+  #root,
+  body.order-print-active #root,
+  body.order-print-active > div:not(.order-print-portal) {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* Reset body */
   html, body {
     margin: 0 !important;
     padding: 0 !important;
@@ -73,9 +85,10 @@
     print-color-adjust: exact !important;
   }
 
-  /* Hide navigation, header, footer, bottom bar, toasts, buttons */
+  /* Hide navigation, header, footer, bottom bar, toasts, buttons, and control panels */
   nav, footer, .no-print, header, button, .modal-backdrop-blur,
-  #mobile-bottom-nav, .mobile-bottom-bar {
+  #mobile-bottom-nav, .mobile-bottom-bar,
+  .order-print-modal-overlay > :not(.order-print-modal-container) {
     display: none !important;
     visibility: hidden !important;
     height: 0 !important;
@@ -83,7 +96,16 @@
     padding: 0 !important;
   }
 
-  /* Reset modal containers so they don't force multiple fixed pages */
+  /* Reset portal and modal containers so they don't force multiple fixed pages */
+  .order-print-portal {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+
   .order-print-modal-overlay {
     position: static !important;
     inset: auto !important;
@@ -95,6 +117,7 @@
     overflow: visible !important;
     height: auto !important;
     max-height: none !important;
+    width: 100% !important;
   }
 
   .order-print-modal-container {
@@ -137,11 +160,11 @@
     page-break-before: avoid !important;
   }
 
-  /* Physical courier parcel label in landscape */
+  /* Physical courier parcel label in A5 landscape (210mm x 148mm) */
   .courier-shipping-label {
     box-sizing: border-box !important;
     width: 100% !important;
-    max-width: 100% !important;
+    max-width: 198mm !important;
     margin: 0 auto !important;
     padding: 0 !important;
     border: none !important;
@@ -150,9 +173,28 @@
   }
 
   .landscape-courier-box {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: 198mm !important;
+    height: 134mm !important;
+    max-height: 134mm !important;
     border: 3px solid #000000 !important;
-    padding: 12px !important;
+    padding: 5mm 6mm !important;
+    background: #ffffff !important;
+    color: #000000 !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .landscape-courier-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1.05fr !important;
+    gap: 5mm !important;
+    height: 100% !important;
+    min-height: 100% !important;
+    box-sizing: border-box !important;
   }
 }

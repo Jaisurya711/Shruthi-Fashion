@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   Printer,
@@ -72,10 +73,24 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
     }
   }, [order]);
 
+  // Manage print mode class on body for bulletproof print isolation
+  useEffect(() => {
+    document.body.classList.add('order-print-active');
+    return () => {
+      document.body.classList.remove('order-print-active');
+    };
+  }, []);
+
   if (!order && !toAddress) return null;
 
   const handlePrint = () => {
+    const prevTitle = document.title;
+    const sanitizedName = (toAddress.fullName || 'Customer').replace(/[^a-zA-Z0-9]/g, '_');
+    document.title = `Courier_Label_${sanitizedName}_${toAddress.pincode || '641030'}`;
     window.print();
+    setTimeout(() => {
+      document.title = prevTitle;
+    }, 1200);
   };
 
   // Smart Parser for WhatsApp Customer Messages
@@ -154,9 +169,10 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
     1, 3, 2, 1, 4, 2, 1, 3, 2, 4, 1, 2, 3, 1, 4, 2, 3, 1, 2, 4, 1, 3, 2, 3, 1, 4
   ];
 
-  return (
-    <div className="order-print-modal-overlay fixed inset-0 z-50 overflow-y-auto bg-stone-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in">
-      <div className="order-print-modal-container relative w-full max-w-4xl bg-white rounded-xl shadow-2xl border border-stone-300 flex flex-col max-h-[94vh] overflow-hidden my-auto">
+  return createPortal(
+    <div className="order-print-portal" data-view={view}>
+      <div className="order-print-modal-overlay fixed inset-0 z-50 overflow-y-auto bg-stone-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in">
+        <div className="order-print-modal-container relative w-full max-w-4xl bg-white rounded-xl shadow-2xl border border-stone-300 flex flex-col max-h-[94vh] overflow-hidden my-auto">
         
         {/* Top Control Bar (Hidden during print) */}
         <div className="p-3 sm:p-4 bg-stone-900 text-white flex flex-wrap items-center justify-between gap-2.5 no-print border-b border-stone-800">
@@ -391,31 +407,31 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
                   </div>
                 </div>
 
-                {/* The Physical Courier Sticker Box - Optimized for LANDSCAPE 1-Page Print */}
-                <div className="landscape-courier-box border-3 border-black p-4 sm:p-5 bg-white text-black font-sans">
+                {/* The Physical Courier Sticker Box - Optimized for A5 LANDSCAPE 1-Page Print */}
+                <div className="landscape-courier-box border-3 border-black p-4 sm:p-5 bg-white text-black font-sans min-h-[350px] sm:min-h-[380px] flex flex-col justify-between">
                   
                   {/* 2-COLUMN LANDSCAPE GRID: LEFT = FROM (BOTTOM LEFT), RIGHT = TO (TOP RIGHT) */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 items-stretch">
+                  <div className="landscape-courier-grid grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 items-stretch flex-1">
                     
-                    {/* LEFT COLUMN: FROM ADDRESS (Positioned at bottom-left) */}
-                    <div className="flex flex-col justify-between border-b-2 md:border-b-0 md:border-r-2 border-black pr-0 md:pr-4 pb-3 md:pb-0">
+                    {/* LEFT COLUMN: FROM ADDRESS (Positioned strictly at bottom-left corner) */}
+                    <div className="flex flex-col justify-end border-b-2 md:border-b-0 md:border-r-2 border-black pr-0 md:pr-4 pb-3 md:pb-0 h-full">
                       
                       {/* Top Header for Sender Column */}
-                      <div className="pb-1 mb-2 border-b border-black/30 flex items-center justify-between">
+                      <div className="pb-1 mb-auto border-b border-black/30 flex items-center justify-between">
                         <span className="font-black text-xs uppercase tracking-wider text-black">
-                          FROM ADDRESS:
+                          DISPATCH FROM:
                         </span>
-                        <span className="text-[9px] font-black uppercase bg-stone-100 text-stone-800 px-1.5 py-0.5 border border-black/20">
-                          COIMBATORE HUB
+                        <span className="text-[10px] font-bold text-stone-700 uppercase">
+                          COIMBATORE
                         </span>
                       </div>
 
-                      {/* Spacer to push FROM address to bottom-left */}
-                      <div className="hidden md:block flex-1 min-h-[20px]" />
+                      {/* Spacer pushing FROM address to bottom-left corner */}
+                      <div className="flex-1 min-h-[24px]" />
 
                       {/* LEFT BOTTOM DEFAULT ADDRESS (EXACT WORD-FOR-WORD AS REQUESTED) */}
                       <div className="space-y-0.5 text-xs sm:text-sm font-semibold text-black leading-snug">
-                        <p className="font-black text-xs uppercase text-stone-700">FROM,</p>
+                        <p className="font-black text-xs sm:text-sm uppercase text-stone-800">FROM,</p>
                         <p className="font-black text-base sm:text-lg uppercase text-black tracking-wide">
                           SHRUTHI FASHION
                         </p>
@@ -423,14 +439,14 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
                         <p>edayarpalayam road,</p>
                         <p>Kovundampalayam,</p>
                         <p>Coimbatore. TN</p>
-                        <p className="font-mono font-bold text-sm mt-1">pin code:641030</p>
-                        <p className="font-mono font-bold text-sm">Ph:9962278349</p>
+                        <p className="font-mono font-bold text-sm sm:text-base mt-1">pin code:641030</p>
+                        <p className="font-mono font-bold text-sm sm:text-base">Ph:9962278349</p>
                       </div>
 
                     </div>
 
-                    {/* RIGHT COLUMN: TO ADDRESS (Positioned at top-right corner) */}
-                    <div className="flex flex-col justify-start pl-0 md:pl-2 space-y-1.5">
+                    {/* RIGHT COLUMN: TO ADDRESS (Positioned strictly at top-right corner) */}
+                    <div className="flex flex-col justify-start pl-0 md:pl-2 space-y-1.5 h-full">
                       
                       {/* Top Header for Destination */}
                       <div className="flex items-center justify-between border-b-2 border-black pb-1 mb-1">
@@ -442,23 +458,23 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
                         </span>
                       </div>
 
-                      <div className="text-xs font-black uppercase text-black tracking-wide leading-tight">
+                      <div className="text-xs sm:text-sm font-black uppercase text-black tracking-wide leading-tight">
                         TO,
                       </div>
-                      <div className="text-base sm:text-lg font-black uppercase text-black leading-snug">
+                      <div className="text-base sm:text-xl font-black uppercase text-black leading-snug">
                         {toAddress.fullName || 'CUSTOMER'}
                       </div>
 
                       <div className="text-xs sm:text-sm font-bold text-black leading-tight space-y-0.5 pt-0.5">
                         <p>{toAddress.street}</p>
-                        <p>{toAddress.area}</p>
+                        {toAddress.area && <p>{toAddress.area}</p>}
                         <p className="uppercase">{toAddress.city}, {toAddress.state || 'Tamil Nadu'}</p>
                       </div>
 
                       {/* Highlighted PIN & Contact */}
                       <div className="pt-2 mt-2 border-t-2 border-black space-y-1.5">
                         <div className="flex items-baseline justify-between">
-                          <span className="text-xs font-black uppercase text-black">
+                          <span className="text-xs sm:text-sm font-black uppercase text-black">
                             PIN CODE:
                           </span>
                           <span className="font-mono text-xl sm:text-2xl font-black text-black tracking-widest bg-yellow-100/90 px-3 py-0.5 border border-black/40 rounded-xs">
@@ -466,13 +482,16 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
                           </span>
                         </div>
 
-                        <div className="flex items-center justify-between text-xs pt-0.5">
+                        <div className="flex items-center justify-between text-xs sm:text-sm pt-0.5">
                           <span className="font-bold text-black">PH / MOBILE:</span>
-                          <span className="font-mono text-sm font-black text-black tracking-wide">
+                          <span className="font-mono text-sm sm:text-base font-black text-black tracking-wide">
                             {toAddress.phone || '9962278349'}
                           </span>
                         </div>
                       </div>
+
+                      {/* Empty spacer below TO address */}
+                      <div className="flex-1" />
 
                     </div>
 
@@ -645,8 +664,10 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
           </div>
         </div>
 
+        </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
