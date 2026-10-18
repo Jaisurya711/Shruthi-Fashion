@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   Printer,
@@ -10,9 +10,14 @@ import {
   Calendar,
   CreditCard,
   MapPin,
-  Scissors
+  Scissors,
+  MessageSquare,
+  Edit3,
+  Sparkles,
+  RotateCcw,
+  Check
 } from 'lucide-react';
-import { UserOrder } from '../types/store';
+import { UserOrder, Address } from '../types/store';
 
 interface OrderPrintModalProps {
   order: UserOrder | null;
@@ -27,10 +32,120 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
 }) => {
   const [view, setView] = useState<'invoice' | 'courier_label'>(initialView);
 
-  if (!order) return null;
+  // Address state for the label (defaults to order address, can be replaced by WhatsApp paste)
+  const [toAddress, setToAddress] = useState<Address>(() => {
+    if (order?.address) {
+      return { ...order.address };
+    }
+    return {
+      id: `addr-wa-${Date.now()}`,
+      fullName: 'Customer Name',
+      phone: '9894088349',
+      street: 'Door No, Street Name',
+      area: 'Area / Landmark',
+      city: 'Coimbatore',
+      pincode: '641030',
+      state: 'Tamil Nadu'
+    };
+  });
+
+  // Additional label metadata
+  const [labelOrderNo, setLabelOrderNo] = useState(order?.orderNumber || `SF-WA-${Math.floor(1000 + Math.random() * 9000)}`);
+  const [labelPieces, setLabelPieces] = useState(order?.items?.reduce((s, i) => s + i.quantity, 0) || 1);
+  const [labelWeight, setLabelWeight] = useState('0.45');
+  const [isCod, setIsCod] = useState(order?.paymentMethod === 'COD');
+  const [codAmount, setCodAmount] = useState(order?.total || 0);
+
+  // WhatsApp Paste Drawer/Modal state
+  const [showWhatsAppPanel, setShowWhatsAppPanel] = useState(false);
+  const [rawWhatsAppText, setRawWhatsAppText] = useState('');
+  const [parseSuccessMessage, setParseSuccessMessage] = useState(false);
+
+  // Sync if order changes
+  useEffect(() => {
+    if (order?.address) {
+      setToAddress({ ...order.address });
+      setLabelOrderNo(order.orderNumber);
+      setLabelPieces(order.items?.reduce((s, i) => s + i.quantity, 0) || 1);
+      setIsCod(order.paymentMethod === 'COD');
+      setCodAmount(order.total);
+    }
+  }, [order]);
+
+  if (!order && !toAddress) return null;
 
   const handlePrint = () => {
     window.print();
+  };
+
+  // Smart Parser for WhatsApp Customer Messages
+  const handleParseWhatsAppText = () => {
+    if (!rawWhatsAppText.trim()) return;
+
+    const text = rawWhatsAppText.trim();
+    const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
+
+    // 1. Extract 10-digit mobile number
+    let phone = '';
+    const phoneMatch = text.match(/(?:(?:\+|0{0,2})91[\s-]?)?([6789]\d{9})/);
+    if (phoneMatch) {
+      phone = phoneMatch[1];
+    }
+
+    // 2. Extract 6-digit Indian PIN code
+    let pincode = '';
+    const pinMatch = text.match(/\b([1-9]\d{5})\b/);
+    if (pinMatch) {
+      pincode = pinMatch[1];
+    }
+
+    // 3. Process remaining lines for Name, Street, Area, City
+    const cleanedLines: string[] = [];
+    for (const line of lines) {
+      const c = line
+        .replace(/^(?:name|customer|recipient|to|c\/o)\s*[:\-]\s*/i, '')
+        .replace(/^(?:phone|mobile|ph|contact|cell|mob|whatsapp|call)\s*[:\-]\s*/i, '')
+        .replace(/^(?:address|add|addr|shipping\s*to)\s*[:\-]\s*/i, '')
+        .replace(/^(?:pincode|pin\s*code|pin|postal|zip)\s*[:\-]\s*/i, '')
+        .trim();
+
+      const digitsOnly = c.replace(/\D/g, '');
+      if (digitsOnly === phone || c === pincode) {
+        continue;
+      }
+      if (c.length > 0) {
+        cleanedLines.push(c);
+      }
+    }
+
+    const fullName = cleanedLines[0] || toAddress.fullName;
+    const street = cleanedLines[1] || toAddress.street;
+    const area = cleanedLines[2] || toAddress.area;
+    const city = cleanedLines[3] || (pincode.startsWith('641') ? 'Coimbatore' : 'Chennai');
+
+    setToAddress({
+      ...toAddress,
+      fullName: fullName.replace(/[^a-zA-Z\s.]/g, '').trim() || fullName,
+      phone: phone || toAddress.phone,
+      pincode: pincode || toAddress.pincode,
+      street: street || toAddress.street,
+      area: area || toAddress.area,
+      city: city || toAddress.city,
+      state: 'Tamil Nadu'
+    });
+
+    setParseSuccessMessage(true);
+    setTimeout(() => {
+      setParseSuccessMessage(false);
+      setShowWhatsAppPanel(false);
+    }, 1200);
+  };
+
+  const handleResetToOrder = () => {
+    if (order?.address) {
+      setToAddress({ ...order.address });
+      setRawWhatsAppText('');
+    }
   };
 
   // Barcode pattern for visual courier routing sticker
@@ -39,18 +154,16 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
     1, 3, 2, 1, 4, 2, 1, 3, 2, 4, 1, 2, 3, 1, 4, 2, 3, 1, 2, 4, 1, 3, 2, 3, 1, 4
   ];
 
-  const totalQuantity = order.items.reduce((s, i) => s + i.quantity, 0);
-
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-stone-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in">
       <div className="relative w-full max-w-3xl bg-white rounded-xl shadow-2xl border border-stone-300 flex flex-col max-h-[94vh] overflow-hidden my-auto">
         
         {/* Top Control Bar (Hidden during print) */}
-        <div className="p-4 bg-stone-900 text-white flex items-center justify-between no-print border-b border-stone-800">
+        <div className="p-3 sm:p-4 bg-stone-900 text-white flex flex-wrap items-center justify-between gap-2.5 no-print border-b border-stone-800">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setView('courier_label')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
                 view === 'courier_label'
                   ? 'bg-amber-600 text-white shadow-xs'
                   : 'bg-stone-800 text-stone-300 hover:text-white'
@@ -61,7 +174,7 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
             </button>
             <button
               onClick={() => setView('invoice')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
                 view === 'invoice'
                   ? 'bg-amber-600 text-white shadow-xs'
                   : 'bg-stone-800 text-stone-300 hover:text-white'
@@ -73,13 +186,26 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
+            {/* WhatsApp Paste Trigger Button */}
+            {view === 'courier_label' && (
+              <button
+                onClick={() => setShowWhatsAppPanel(!showWhatsAppPanel)}
+                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 cursor-pointer shadow-sm transition-colors"
+                title="Paste customer address from WhatsApp"
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                <span>{showWhatsAppPanel ? 'Hide Address Tool' : 'Paste WhatsApp Address'}</span>
+              </button>
+            )}
+
             <button
               onClick={handlePrint}
-              className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 cursor-pointer shadow-sm transition-colors"
+              className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 cursor-pointer shadow-sm transition-colors"
             >
               <Printer className="w-3.5 h-3.5" />
               <span>Print Label</span>
             </button>
+
             <button
               onClick={onClose}
               className="p-1.5 text-stone-400 hover:text-white cursor-pointer rounded-lg hover:bg-stone-800 transition-colors"
@@ -90,11 +216,157 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
           </div>
         </div>
 
+        {/* WhatsApp Address Tool Panel (Collapsible / Non-printable) */}
+        {showWhatsAppPanel && (
+          <div className="p-4 bg-emerald-50 border-b border-emerald-200 no-print text-xs space-y-3.5 text-stone-900 animate-in slide-in-from-top-2">
+            <div className="flex items-center justify-between border-b border-emerald-200/80 pb-2">
+              <div className="flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-xs">
+                  WA
+                </span>
+                <div>
+                  <h3 className="font-bold text-emerald-950 text-sm">
+                    Paste WhatsApp Order Address to Print Label
+                  </h3>
+                  <p className="text-[11px] text-emerald-800">
+                    Paste raw customer message from WhatsApp. The system will automatically extract Name, Phone, Address &amp; PIN code.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowWhatsAppPanel(false)}
+                className="text-stone-400 hover:text-stone-700"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5">
+              
+              {/* Left col: Raw WhatsApp Text Box */}
+              <div className="md:col-span-6 space-y-2">
+                <label className="block font-semibold text-stone-800 text-xs">
+                  Paste WhatsApp Message Text:
+                </label>
+                <textarea
+                  rows={5}
+                  placeholder={`Example from WhatsApp:\nName: S. Meenakshi\nDoor 14/B, Gokulam Street\nNear Apollo Pharmacy, Singanallur\nCoimbatore - 641005\nPhone: 9443210987`}
+                  value={rawWhatsAppText}
+                  onChange={(e) => setRawWhatsAppText(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-emerald-300 rounded-lg text-xs font-mono text-stone-900 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+                />
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleParseWhatsAppText}
+                    className="px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-md flex items-center gap-1.5 shadow-xs cursor-pointer"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Auto-Extract &amp; Apply to Label</span>
+                  </button>
+
+                  {order && (
+                    <button
+                      type="button"
+                      onClick={handleResetToOrder}
+                      className="px-3 py-1.5 bg-white border border-stone-300 hover:bg-stone-100 text-stone-700 font-medium rounded-md flex items-center gap-1 cursor-pointer"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      <span>Reset to Original Order</span>
+                    </button>
+                  )}
+                </div>
+
+                {parseSuccessMessage && (
+                  <p className="text-emerald-800 font-bold flex items-center gap-1 text-[11px] pt-1">
+                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>WhatsApp address applied successfully to the shipping label!</span>
+                  </p>
+                )}
+              </div>
+
+              {/* Right col: Direct Edit Fields */}
+              <div className="md:col-span-6 space-y-2 bg-white p-3 rounded-lg border border-emerald-200">
+                <p className="font-bold text-stone-800 text-[11px] uppercase tracking-wider border-b border-stone-100 pb-1">
+                  Or Manually Edit TO Address Fields:
+                </p>
+
+                <div className="grid grid-cols-2 gap-2 text-[11px]">
+                  <div>
+                    <label className="block text-stone-600 font-medium mb-0.5">Recipient Name</label>
+                    <input
+                      type="text"
+                      value={toAddress.fullName}
+                      onChange={(e) => setToAddress({ ...toAddress, fullName: e.target.value })}
+                      className="w-full px-2 py-1 bg-stone-50 border border-stone-300 rounded text-stone-900 text-xs focus:bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-stone-600 font-medium mb-0.5">Mobile Number</label>
+                    <input
+                      type="text"
+                      value={toAddress.phone}
+                      onChange={(e) => setToAddress({ ...toAddress, phone: e.target.value })}
+                      className="w-full px-2 py-1 bg-stone-50 border border-stone-300 rounded text-stone-900 text-xs focus:bg-white"
+                    />
+                  </div>
+
+                  <div className="col-span-2">
+                    <label className="block text-stone-600 font-medium mb-0.5">Door No / Street</label>
+                    <input
+                      type="text"
+                      value={toAddress.street}
+                      onChange={(e) => setToAddress({ ...toAddress, street: e.target.value })}
+                      className="w-full px-2 py-1 bg-stone-50 border border-stone-300 rounded text-stone-900 text-xs focus:bg-white"
+                    />
+                  </div>
+
+                  <div className="col-span-2">
+                    <label className="block text-stone-600 font-medium mb-0.5">Area / Landmark</label>
+                    <input
+                      type="text"
+                      value={toAddress.area}
+                      onChange={(e) => setToAddress({ ...toAddress, area: e.target.value })}
+                      className="w-full px-2 py-1 bg-stone-50 border border-stone-300 rounded text-stone-900 text-xs focus:bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-stone-600 font-medium mb-0.5">PIN Code</label>
+                    <input
+                      type="text"
+                      maxLength={6}
+                      value={toAddress.pincode}
+                      onChange={(e) => setToAddress({ ...toAddress, pincode: e.target.value })}
+                      className="w-full px-2 py-1 bg-stone-50 border border-stone-300 rounded text-stone-900 font-bold text-xs focus:bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-stone-600 font-medium mb-0.5">City / State</label>
+                    <input
+                      type="text"
+                      value={toAddress.city}
+                      onChange={(e) => setToAddress({ ...toAddress, city: e.target.value })}
+                      className="w-full px-2 py-1 bg-stone-50 border border-stone-300 rounded text-stone-900 text-xs focus:bg-white"
+                    />
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+        )}
+
         {/* Scrollable Document Preview Area */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-stone-100/70">
           <div className="printable-document bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-stone-200 max-w-2xl mx-auto text-stone-900 font-sans">
             
-            {/* VIEW 1: COURIER DELIVERY SHIPPING LABEL (MATCHES PARCEL POUCH EXACTLY) */}
+            {/* VIEW 1: COURIER DELIVERY SHIPPING LABEL (PHYSICAL COURIER PARCEL STICKER) */}
             {view === 'courier_label' && (
               <div className="courier-shipping-label border-2 border-dashed border-stone-400 p-2 sm:p-3 rounded-lg bg-white">
                 
@@ -103,13 +375,24 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
                   <span className="flex items-center gap-1">
                     <Scissors className="w-3.5 h-3.5" /> Cut along dashed border to stick on courier polybag / parcel
                   </span>
-                  <span className="font-semibold text-stone-700">Size: Standard Courier Sticker (4×6")</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowWhatsAppPanel(true)}
+                      className="text-emerald-700 font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <Edit3 className="w-3 h-3" />
+                      <span>Edit TO Address from WhatsApp</span>
+                    </button>
+                    <span className="text-stone-300">|</span>
+                    <span className="font-semibold text-stone-700">4×6" Label</span>
+                  </div>
                 </div>
 
                 {/* The Physical Courier Sticker Box */}
                 <div className="border-3 border-black p-4 sm:p-5 bg-white space-y-4 text-black font-sans">
                   
-                  {/* TOP ROW: [TOP LEFT: Courier / Booking Details] & [TOP RIGHT: TO ADDRESS CORNER] */}
+                  {/* TOP ROW: [TOP LEFT: Courier / Booking Details] & [TOP RIGHT CORNER: TO ADDRESS] */}
                   <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 pb-3 border-b-2 border-black">
                     
                     {/* TOP LEFT (5 cols): Courier Service & Booking Meta */}
@@ -121,18 +404,18 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
                         </div>
                         <div className="text-[11px] leading-tight font-semibold text-stone-800 space-y-0.5">
                           <p><strong className="text-black">SERVICE:</strong> SURFACE APPAREL</p>
-                          <p><strong className="text-black">DATE:</strong> {order.date}</p>
-                          <p><strong className="text-black">ORDER ID:</strong> #{order.orderNumber}</p>
-                          <p><strong className="text-black">PIECES:</strong> {totalQuantity} {totalQuantity === 1 ? 'Item' : 'Items'}</p>
-                          <p><strong className="text-black">WEIGHT:</strong> ~{(0.35 * totalQuantity).toFixed(2)} KG</p>
+                          <p><strong className="text-black">DATE:</strong> {order?.date || new Date().toISOString().split('T')[0]}</p>
+                          <p><strong className="text-black">ORDER ID:</strong> #{labelOrderNo}</p>
+                          <p><strong className="text-black">PIECES:</strong> {labelPieces} {labelPieces === 1 ? 'Item' : 'Items'}</p>
+                          <p><strong className="text-black">WEIGHT:</strong> ~{labelWeight} KG</p>
                         </div>
                       </div>
 
                       {/* Payment Status Stamp */}
                       <div className="mt-3 pt-2 border-t border-black/40">
-                        {order.paymentMethod === 'COD' ? (
+                        {isCod ? (
                           <div className="px-2 py-1 bg-amber-50 border-2 border-amber-700 text-amber-900 text-center font-black text-xs uppercase">
-                            COLLECT CASH: ₹{order.total}
+                            COLLECT CASH: ₹{codAmount}
                           </div>
                         ) : (
                           <div className="px-2 py-1 bg-emerald-50 border-2 border-black text-black text-center font-black text-xs uppercase tracking-wider">
@@ -142,7 +425,7 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
                       </div>
                     </div>
 
-                    {/* TOP RIGHT (7 cols): TO ADDRESS (PLACED AT TOP RIGHT SIDE CORNER) */}
+                    {/* TOP RIGHT CORNER (7 cols): TO ADDRESS */}
                     <div className="sm:col-span-7 pl-0 sm:pl-3 space-y-1">
                       <div className="flex items-center justify-between border-b border-black pb-1 mb-1.5">
                         <span className="font-black text-sm uppercase tracking-wider text-black">
@@ -157,13 +440,13 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
                         TO,
                       </div>
                       <div className="text-base font-black uppercase text-black leading-snug">
-                        {order.address.fullName}
+                        {toAddress.fullName || 'CUSTOMER'}
                       </div>
 
                       <div className="text-xs font-bold text-black leading-tight space-y-0.5 pt-0.5">
-                        <p>{order.address.street}</p>
-                        <p>{order.address.area}</p>
-                        <p className="uppercase">{order.address.city}, {order.address.state || 'Tamil Nadu'}</p>
+                        <p>{toAddress.street}</p>
+                        <p>{toAddress.area}</p>
+                        <p className="uppercase">{toAddress.city}, {toAddress.state || 'Tamil Nadu'}</p>
                       </div>
 
                       {/* Highlighted PIN & Contact */}
@@ -173,14 +456,14 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
                             PIN CODE:
                           </span>
                           <span className="font-mono text-xl sm:text-2xl font-black text-black tracking-widest bg-yellow-100/80 px-2 py-0.5 border border-black/30 rounded-xs">
-                            {order.address.pincode}
+                            {toAddress.pincode || '641030'}
                           </span>
                         </div>
 
                         <div className="flex items-center justify-between text-xs pt-1">
                           <span className="font-bold text-black">PH / MOBILE:</span>
                           <span className="font-mono text-sm font-black text-black">
-                            {order.address.phone}
+                            {toAddress.phone || '9962278349'}
                           </span>
                         </div>
                       </div>
@@ -191,13 +474,12 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
                   {/* BOTTOM ROW: [LEFT BOTTOM: DEFAULT FROM ADDRESS] & [BOTTOM RIGHT: BARCODE & ROUTING] */}
                   <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-1 items-start">
                     
-                    {/* LEFT BOTTOM DEFAULT ADDRESS (WORD-FOR-WORD AS REQUESTED) */}
+                    {/* LEFT BOTTOM DEFAULT ADDRESS (EXACT WORD-FOR-WORD AS REQUESTED) */}
                     <div className="sm:col-span-6 pr-0 sm:pr-3 border-b sm:border-b-0 sm:border-r-2 border-black pb-3 sm:pb-0 space-y-0.5 text-xs font-semibold text-black leading-snug">
                       <p className="font-black text-sm uppercase tracking-wider border-b border-black pb-1 mb-1">
                         FROM ADDRESS:
                       </p>
                       
-                      {/* Exact user requested block */}
                       <p className="font-black text-xs uppercase">FROM,</p>
                       <p className="font-black text-sm uppercase text-black tracking-wide">
                         SHRUTHI FASHION
@@ -228,11 +510,11 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
                       </div>
 
                       <p className="font-mono font-black text-xs tracking-widest text-black">
-                        AWB: {order.trackingNumber || `SF-${order.address.pincode}-${order.orderNumber}`}
+                        AWB: {order?.trackingNumber || `SF-${toAddress.pincode || '641030'}-${labelOrderNo}`}
                       </p>
 
                       <div className="pt-1 border-t border-black/40 text-[10px] font-bold text-stone-800 uppercase flex justify-between">
-                        <span>DEST: {order.address.city || 'COIMBATORE'}</span>
+                        <span>DEST: {toAddress.city || 'COIMBATORE'}</span>
                         <span className="text-red-700">HANDLE WITH CARE</span>
                       </div>
                     </div>
@@ -251,7 +533,7 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
             )}
 
             {/* VIEW 2: TAX INVOICE / ORDER BILL */}
-            {view === 'invoice' && (
+            {view === 'invoice' && order && (
               <div className="space-y-6">
                 {/* Invoice Header */}
                 <div className="border-b-2 border-stone-900 pb-4 flex flex-col sm:flex-row justify-between items-start gap-4">
@@ -295,14 +577,14 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
                     <p className="font-bold uppercase tracking-wider text-stone-500 text-[10px] mb-1">
                       Billed &amp; Shipped To:
                     </p>
-                    <p className="text-sm font-bold text-stone-900">{order.address.fullName}</p>
-                    <p className="text-stone-700 mt-0.5">{order.address.street}</p>
-                    <p className="text-stone-700">{order.address.area}</p>
+                    <p className="text-sm font-bold text-stone-900">{toAddress.fullName}</p>
+                    <p className="text-stone-700 mt-0.5">{toAddress.street}</p>
+                    <p className="text-stone-700">{toAddress.area}</p>
                     <p className="text-stone-900 font-medium">
-                      {order.address.city} - {order.address.pincode}, {order.address.state || 'Tamil Nadu'}
+                      {toAddress.city} - {toAddress.pincode}, {toAddress.state || 'Tamil Nadu'}
                     </p>
                     <p className="font-mono font-semibold text-stone-900 mt-1">
-                      Mobile: {order.address.phone}
+                      Mobile: {toAddress.phone}
                     </p>
                   </div>
 

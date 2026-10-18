@@ -578,6 +578,51 @@ export const StoreManagerModal: React.FC = () => {
                         </button>
                       ))}
                     </div>
+
+                    {/* New WhatsApp Courier Label Button */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newWaOrder: UserOrder = {
+                          id: `ord-wa-${Date.now()}`,
+                          orderNumber: `WA-${Math.floor(1000 + Math.random() * 9000)}`,
+                          date: new Date().toISOString().split('T')[0],
+                          items: [
+                            {
+                              id: `item-wa-${Date.now()}`,
+                              product: products[0] || ({} as any),
+                              selectedSize: 'Free Size',
+                              selectedColor: 'Standard',
+                              quantity: 1
+                            }
+                          ],
+                          subtotal: 0,
+                          discount: 0,
+                          shippingFee: 80,
+                          total: 0,
+                          address: {
+                            id: `addr-wa-${Date.now()}`,
+                            fullName: '',
+                            phone: '',
+                            street: '',
+                            area: '',
+                            city: 'Coimbatore',
+                            pincode: '',
+                            state: 'Tamil Nadu'
+                          },
+                          paymentMethod: 'UPI',
+                          courierPartner: 'ST Courier / Speed Courier',
+                          trackingNumber: `SF-WA-${Math.floor(100000 + Math.random() * 900000)}`,
+                          deliveryStatus: 'Processing',
+                          estimatedDelivery: '2 - 3 Business Days'
+                        };
+                        setPrintModalOrder({ order: newWaOrder, view: 'courier_label' });
+                      }}
+                      className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-md font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs shrink-0"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5" />
+                      <span>+ Print WhatsApp Label</span>
+                    </button>
                   </div>
 
                   {/* Orders Listing */}
