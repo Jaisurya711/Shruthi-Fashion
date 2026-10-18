@@ -11,8 +11,16 @@ export const MobileBottomNav: React.FC = () => {
     setIsWishlistOpen,
     setIsAuthOpen,
     setIsAccountOpen,
-    setFilters
+    setFilters,
+    activeProduct,
+    isCheckoutOpen,
+    orderSuccess
   } = useStore();
+
+  // Do not show sticky bottom nav during full-page checkout, product detail view, or order success
+  if (isCheckoutOpen || activeProduct || orderSuccess) {
+    return null;
+  }
 
   const handleHomeClick = () => {
     setFilters({ category: 'All Collections', search: '' });
@@ -30,7 +38,10 @@ export const MobileBottomNav: React.FC = () => {
   };
 
   return (
-    <div className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-stone-200 py-1.5 px-3">
+    <div
+      className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-stone-200 py-1.5 px-3 select-none touch-manipulation shadow-[0_-2px_10px_rgba(0,0,0,0.05)]"
+      style={{ paddingBottom: 'calc(0.375rem + env(safe-area-inset-bottom, 0px))' }}
+    >
       <div className="flex items-center justify-around max-w-md mx-auto">
         
         {/* Home */}

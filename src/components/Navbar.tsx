@@ -43,15 +43,11 @@ export const Navbar: React.FC = () => {
       {/* Top Bar: Minimal contact info */}
       <div className="bg-[#1C1917] text-[#FAF9F5] text-xs py-1.5 px-3 sm:px-4 border-b border-stone-800">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 text-stone-300 text-[11px] sm:text-xs">
-            <span className="text-amber-400 font-bold">Shruthi Fashion</span>
-            <span aria-hidden="true"></span>
-            <span className="hidden sm:inline"> Trending Collections</span>
+          <div className="flex items-center gap-2 text-stone-400 text-[11px] sm:text-xs">
+            <span>10:00 AM - 9:30 PM Daily</span>
           </div>
 
           <div className="flex items-center gap-3 text-stone-300 text-[11px] sm:text-xs">
-            <span className="hidden sm:inline text-stone-400">10:00 AM - 9:30 PM Daily</span>
-            <span className="hidden sm:inline text-stone-600">|</span>
             <a
               href={`tel:${SHOP_INFO.primaryContact}`}
               className="flex items-center gap-1 hover:text-amber-300 transition-colors"

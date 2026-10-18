@@ -55,8 +55,16 @@ export const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
 
   return (
     <article
+      role="button"
+      tabIndex={0}
       onClick={() => setActiveProduct(product)}
-      className="group relative flex flex-col bg-white border border-stone-200/90 rounded-md overflow-hidden transition-all duration-200 hover:shadow-md hover:border-stone-300 cursor-pointer"
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          setActiveProduct(product);
+        }
+      }}
+      className="group relative flex flex-col bg-white border border-stone-200/90 rounded-md overflow-hidden transition-all duration-200 hover:shadow-md hover:border-stone-300 cursor-pointer active:scale-[0.99] select-none touch-manipulation"
     >
       {/* Product Image Stage */}
       <div className="relative aspect-[3/4] bg-stone-100 overflow-hidden">

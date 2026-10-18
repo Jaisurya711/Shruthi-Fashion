@@ -74,6 +74,7 @@ export const ProductDetailModal: React.FC = () => {
       setIsZoomed(false);
       setAddedToast(false);
 
+      // Lock body scroll
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
@@ -107,11 +108,13 @@ export const ProductDetailModal: React.FC = () => {
   const handleTouchEnd = () => {
     if (touchStartXRef.current === null || touchEndXRef.current === null) return;
     const distanceX = touchStartXRef.current - touchEndXRef.current;
-    const minSwipeDistance = 35;
+    const minSwipeDistance = 35; // minimum pixels to count as swipe
 
     if (distanceX > minSwipeDistance) {
+      // Swiped Left -> Next Image
       setSelectedImageIdx((prev) => (prev === productImages.length - 1 ? 0 : prev + 1));
     } else if (distanceX < -minSwipeDistance) {
+      // Swiped Right -> Previous Image
       setSelectedImageIdx((prev) => (prev === 0 ? productImages.length - 1 : prev - 1));
     }
 
@@ -153,10 +156,10 @@ export const ProductDetailModal: React.FC = () => {
   return (
     <div className="fixed inset-0 z-50 bg-[#FAF9F5] sm:bg-stone-950/75 flex flex-col items-center justify-center sm:p-4 md:p-6 overflow-hidden">
       
-      {/* Modal Dialog Container */}
-      <div className="relative w-full max-w-5xl h-full sm:h-auto sm:max-h-[92vh] bg-[#FAF9F5] sm:rounded-2xl sm:shadow-2xl sm:border sm:border-stone-300 flex flex-col overflow-hidden">
+      {/* Modal Dialog Container: full viewport on mobile (100dvh), card dialog on desktop */}
+      <div className="relative w-full max-w-5xl h-[100dvh] sm:h-auto sm:max-h-[92vh] bg-[#FAF9F5] sm:rounded-2xl sm:shadow-2xl sm:border sm:border-stone-300 flex flex-col overflow-hidden">
         
-        {/* Top Header Bar */}
+        {/* Top Header Bar: Sticky on mobile and desktop */}
         <div className="shrink-0 bg-white/95 backdrop-blur-md px-4 py-3 border-b border-stone-200 flex items-center justify-between z-20">
           <button
             onClick={() => setActiveProduct(null)}
@@ -189,13 +192,14 @@ export const ProductDetailModal: React.FC = () => {
           </div>
         </div>
 
-        {/* Scrollable Body */}
+        {/* Scrollable Body: Smooth vertical scrolling for both mobile and desktop */}
         <div className="flex-1 overflow-y-auto overscroll-contain">
           <div className="flex flex-col md:flex-row">
 
-            {/* Left Column: Image Stage */}
+            {/* Left Column: Mobile & Desktop Image Stage */}
             <div className="w-full md:w-1/2 p-3 sm:p-5 md:p-6 flex flex-col bg-stone-100/60 border-b md:border-b-0 md:border-r border-stone-200 shrink-0">
               
+              {/* Main Visual Frame with Touch Swiping */}
               <div
                 className="relative aspect-[1/1] sm:aspect-[4/5] md:aspect-[3/4] max-h-[46vh] sm:max-h-none rounded-xl overflow-hidden bg-stone-200 shadow-inner group select-none touch-pan-y"
                 onTouchStart={handleTouchStart}
@@ -212,6 +216,7 @@ export const ProductDetailModal: React.FC = () => {
                   onClick={() => setIsZoomed(!isZoomed)}
                 />
 
+                {/* Photo Counter Pill Badge */}
                 {productImages.length > 1 && (
                   <div className="absolute top-2.5 left-2.5 px-2.5 py-0.5 bg-black/60 backdrop-blur-xs text-white text-[11px] font-semibold rounded-full flex items-center gap-1 shadow-sm">
                     <span>{selectedImageIdx + 1} / {productImages.length}</span>
@@ -219,6 +224,7 @@ export const ProductDetailModal: React.FC = () => {
                   </div>
                 )}
 
+                {/* Left & Right Chevron Arrows */}
                 {productImages.length > 1 && (
                   <>
                     <button
@@ -246,6 +252,7 @@ export const ProductDetailModal: React.FC = () => {
                   </>
                 )}
 
+                {/* Zoom Button */}
                 <button
                   type="button"
                   onClick={() => setIsZoomed(!isZoomed)}
@@ -255,6 +262,7 @@ export const ProductDetailModal: React.FC = () => {
                   <span>{isZoomed ? 'Reset' : 'Zoom'}</span>
                 </button>
 
+                {/* Mobile Pagination Dots */}
                 {productImages.length > 1 && (
                   <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-2 py-1 bg-black/40 backdrop-blur-xs rounded-full sm:hidden">
                     {productImages.map((_, idx) => (
@@ -272,7 +280,7 @@ export const ProductDetailModal: React.FC = () => {
                 )}
               </div>
 
-              {/* Thumbnails */}
+              {/* Thumbnails Strip */}
               <div className="mt-2.5 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
                 {productImages.map((img, idx) => (
                   <button
@@ -298,7 +306,7 @@ export const ProductDetailModal: React.FC = () => {
                 ))}
               </div>
 
-              {/* Desktop Workshop Assurance */}
+              {/* Desktop Workshop Assurance (Hidden on mobile here, placed below details on mobile) */}
               <div className="hidden md:flex mt-4 p-3 bg-white border border-stone-200 rounded-lg text-xs text-stone-600 items-start gap-2.5 shadow-2xs">
                 <Sparkles className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
                 <div>
@@ -310,7 +318,7 @@ export const ProductDetailModal: React.FC = () => {
               </div>
             </div>
 
-            {/* Right Column: Title, Price, Colors, Sizes & Details */}
+            {/* Right Column: Title, Price, Colors, Sizes & CTAs */}
             <div className="w-full md:w-1/2 p-4 sm:p-6 md:p-8 flex flex-col justify-between space-y-5">
               <div className="space-y-4">
                 
@@ -327,7 +335,7 @@ export const ProductDetailModal: React.FC = () => {
                   </span>
                 </div>
 
-                {/* Title */}
+                {/* Product Title & Subtitle */}
                 <div>
                   <h1 className="text-xl sm:text-2xl font-serif font-bold text-stone-900 leading-snug">
                     {activeProduct.title}
@@ -388,14 +396,14 @@ export const ProductDetailModal: React.FC = () => {
                   </p>
                 </div>
 
-                {/* PROMINENT COLOR SELECTION */}
+                {/* PROMINENT COLOR SELECTION (Right under Price) */}
                 {productColors.length > 0 && (
                   <div className="p-3.5 bg-stone-50 rounded-xl border border-stone-200 space-y-2">
                     <div className="flex items-center justify-between">
                       <label className="text-xs font-bold text-stone-900 uppercase tracking-wider">
                         Select Colour / Shade
                       </label>
-                      <span className="text-xs font-semibold text-amber-900 bg-amber-100/80 px-2.5 py-0.5 rounded-full border border-amber-200">
+                      <span className="text-xs font-semibold text-amber-900 bg-amber-100/80 px-2 py-0.5 rounded-full border border-amber-200">
                         Selected: <strong>{selectedColor}</strong>
                       </span>
                     </div>
@@ -523,7 +531,7 @@ export const ProductDetailModal: React.FC = () => {
                   <p><strong className="text-stone-900">Care:</strong> {activeProduct.careInstructions || 'Dry in shade'}</p>
                 </div>
 
-                {/* Mobile Workshop Guarantee (Positioned at bottom) */}
+                {/* Mobile Workshop Guarantee (Positioned at bottom on mobile) */}
                 <div className="md:hidden p-3 bg-stone-100 rounded-lg text-xs text-stone-600 flex items-start gap-2.5">
                   <Sparkles className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
                   <div>
@@ -554,7 +562,7 @@ export const ProductDetailModal: React.FC = () => {
                   </div>
                 )}
 
-                {/* Desktop Action Buttons */}
+                {/* Desktop Action Buttons (Hidden on mobile) */}
                 <div className="hidden md:block pt-4 border-t border-stone-200 space-y-2">
                   <div className="grid grid-cols-2 gap-3">
                     <button
@@ -597,8 +605,12 @@ export const ProductDetailModal: React.FC = () => {
           </div>
         </div>
 
-        {/* Truly Docked Mobile Bottom Action Bar (Cannot float or scroll up!) */}
-        <div className="md:hidden shrink-0 bg-white border-t border-stone-200 px-4 py-2.5 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] z-30 flex items-center justify-between gap-3">
+        {/* Truly Fixed Mobile Bottom Action Bar */}
+        {/* Rendered at the dialog bottom boundary: CANNOT scroll up or float in the middle! */}
+        <div
+          className="md:hidden shrink-0 bg-white border-t border-stone-200 px-4 py-2.5 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] z-30 flex items-center justify-between gap-3"
+          style={{ paddingBottom: 'calc(0.625rem + env(safe-area-inset-bottom, 0px))' }}
+        >
           <div className="flex flex-col">
             <span className="text-[11px] text-stone-500 leading-tight">Total</span>
             <span className="text-base font-serif font-bold text-stone-900 tabular-nums">

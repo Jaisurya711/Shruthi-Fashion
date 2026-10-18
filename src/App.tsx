@@ -6,7 +6,6 @@ import { SearchFilterBar } from './components/SearchFilterBar';
 import { ProductCard } from './components/ProductCard';
 import { ProductDetailModal } from './components/ProductDetailModal';
 import { CartDrawer } from './components/CartDrawer';
-import { CheckoutModal } from './components/CheckoutModal';
 import { AuthModal } from './components/AuthModal';
 import { AccountDrawer } from './components/AccountDrawer';
 import { WishlistDrawer } from './components/WishlistDrawer';
@@ -50,41 +49,60 @@ const ProductGridContent: React.FC = () => {
   );
 };
 
+import { CheckoutPage } from './components/CheckoutPage';
+
+const MainStoreApp: React.FC = () => {
+  const { isCheckoutOpen, setIsCheckoutOpen } = useStore();
+
+  if (isCheckoutOpen) {
+    return (
+      <div className="min-h-screen min-h-[100dvh] flex flex-col bg-[#FAF9F5] text-stone-900 font-sans">
+        <CheckoutPage onBack={() => setIsCheckoutOpen(false)} />
+        <AuthModal />
+        <OrderSuccessModal />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen min-h-[100dvh] flex flex-col bg-[#FAF9F5] text-stone-900 font-sans">
+      {/* Top Navbar */}
+      <Navbar />
+
+      {/* Hero Campaign */}
+      <Hero />
+
+      {/* Catalog Search & Multi-Facet Filters */}
+      <SearchFilterBar />
+
+      {/* Responsive Product Gallery Grid */}
+      <ProductGridContent />
+
+      {/* Coimbatore Local Boutique & Visiting Info */}
+      <StoreInfoSection />
+
+      {/* Footer */}
+      <Footer />
+
+      {/* Floating Modals & Drawers */}
+      <ProductDetailModal />
+      <CartDrawer />
+      <AuthModal />
+      <AccountDrawer />
+      <WishlistDrawer />
+      <OrderSuccessModal />
+      <StoreManagerModal />
+
+      {/* Mobile Sticky Thumb Navigation Bar */}
+      <MobileBottomNav />
+    </div>
+  );
+};
+
 export default function App() {
   return (
     <StoreProvider>
-      <div className="min-h-screen flex flex-col bg-[#FAF9F5] text-stone-900 font-sans">
-        {/* Top Navbar */}
-        <Navbar />
-
-        {/* Hero Campaign */}
-        <Hero />
-
-        {/* Catalog Search & Multi-Facet Filters */}
-        <SearchFilterBar />
-
-        {/* Responsive Product Gallery Grid */}
-        <ProductGridContent />
-
-        {/* Coimbatore Local Boutique & Visiting Info */}
-        <StoreInfoSection />
-
-        {/* Footer */}
-        <Footer />
-
-        {/* Floating Modals & Drawers */}
-        <ProductDetailModal />
-        <CartDrawer />
-        <CheckoutModal />
-        <AuthModal />
-        <AccountDrawer />
-        <WishlistDrawer />
-        <OrderSuccessModal />
-        <StoreManagerModal />
-
-        {/* Mobile Sticky Thumb Navigation Bar */}
-        <MobileBottomNav />
-      </div>
+      <MainStoreApp />
     </StoreProvider>
   );
 }

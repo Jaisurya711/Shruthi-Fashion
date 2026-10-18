@@ -35,7 +35,7 @@ export const AuthModal: React.FC = () => {
     setErrorMsg('');
   };
 
-  // Draw captcha whenever captchaCode changes
+  // Draw captcha whenever captchaCode or canvas changes
   useEffect(() => {
     if (!captchaCode) return;
     const canvas = canvasRef.current;
@@ -174,6 +174,7 @@ export const AuthModal: React.FC = () => {
         setEnteredCaptcha('');
         setErrorMsg('');
 
+        // If user was prompted to login during checkout, open checkout modal
         if (pendingCheckoutAfterAuth) {
           setIsCheckoutOpen(true);
         }
@@ -249,7 +250,7 @@ export const AuthModal: React.FC = () => {
                     required
                     placeholder="Enter your full name"
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={(e) => setName(e.target.value.replace(/[^a-zA-Z\s]/g, ''))}
                     className="w-full pl-9 pr-3 py-2.5 bg-white border border-stone-300 rounded-md text-stone-900 placeholder:text-stone-400 focus:outline-none focus:border-amber-800 focus:ring-1 focus:ring-amber-800"
                   />
                 </div>
@@ -271,7 +272,7 @@ export const AuthModal: React.FC = () => {
                     maxLength={10}
                     placeholder="10-digit mobile number"
                     value={cleanPhone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                     className="w-full pl-18 pr-3 py-2.5 bg-white border border-stone-300 rounded-md text-stone-900 placeholder:text-stone-400 focus:outline-none focus:border-amber-800 focus:ring-1 focus:ring-amber-800 font-medium tracking-wide"
                   />
                 </div>

@@ -13,11 +13,17 @@ export interface VerifyOtpResponse {
   error?: string;
 }
 
+/**
+ * Requests an OTP to be sent via SMS to customer's mobile number.
+ * The OTP is sent directly to the customer's phone and is NEVER exposed to the frontend.
+ */
 export async function requestMobileOtp(phone: string, name: string): Promise<SendOtpResponse> {
   try {
     const response = await fetch('/api/send-otp', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({ phone, name }),
     });
 
@@ -37,13 +43,17 @@ export async function requestMobileOtp(phone: string, name: string): Promise<Sen
       smsGateway: data.smsGateway,
     };
   } catch (error: any) {
+    console.error('Error requesting OTP via /api/send-otp:', error);
     return {
       success: false,
-      error: error?.message || 'Unable to connect to SMS service.',
+      error: error?.message || 'Unable to connect to SMS service. Please try again.',
     };
   }
 }
 
+/**
+ * Verifies the OTP entered by the customer against the secure server-signed session token.
+ */
 export async function verifyMobileOtp(
   phone: string,
   otp: string,
@@ -52,7 +62,9 @@ export async function verifyMobileOtp(
   try {
     const response = await fetch('/api/verify-otp', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({ phone, otp, sessionToken }),
     });
 
@@ -69,6 +81,7 @@ export async function verifyMobileOtp(
       message: data.message || 'Mobile number verified successfully.',
     };
   } catch (error: any) {
+    console.error('Error verifying OTP via /api/verify-otp:', error);
     return {
       success: false,
       error: error?.message || 'Network error while verifying OTP.',

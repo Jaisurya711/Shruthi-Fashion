@@ -1,39 +1,43 @@
 import React, { useState } from 'react';
-import { Phone, MapPin, Instagram, Youtube, Sparkles, ShieldCheck, Heart } from 'lucide-react';
-import { SHOP_INFO } from '../data/products';
+import { Phone, MessageCircle, MapPin, Instagram, Youtube, Sparkles, Settings } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
+import { SHOP_INFO } from '../data/products';
 
 export const Footer: React.FC = () => {
   const { setFilters, setIsStoreManagerOpen } = useStore();
-  const [clickCount, setClickCount] = useState(0);
+  const [ownerClickCount, setOwnerClickCount] = useState(0);
 
-  const handleCategoryClick = (cat: string, subcat?: string) => {
+  const handleNav = (cat: string, subcat?: string) => {
     setFilters({ category: cat, subcategory: subcat || 'All Styles' });
-    const catalogEl = document.getElementById('catalog-section');
-    if (catalogEl) {
-      catalogEl.scrollIntoView({ behavior: 'smooth' });
-    }
+    const el = document.getElementById('catalog-section');
+    el?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const handleOwnerClick = () => {
-    const next = clickCount + 1;
-    if (next >= 5) {
-      setClickCount(0);
+    const nextCount = ownerClickCount + 1;
+    if (nextCount >= 5) {
+      setOwnerClickCount(0);
       setIsStoreManagerOpen(true);
     } else {
-      setClickCount(next);
+      setOwnerClickCount(nextCount);
+      // Reset counter if user pauses for more than 4 seconds
       setTimeout(() => {
-        setClickCount(0);
+        setOwnerClickCount(0);
       }, 4000);
     }
   };
 
   return (
-    <footer className="bg-stone-950 text-stone-300 border-t border-stone-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-10">
+    <footer
+      className="bg-stone-950 text-stone-300 pt-12 pb-20 md:pb-12 border-t border-stone-800"
+      style={{ paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom, 0px))' }}
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+        
+        {/* Main Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           
-          {/* Brand Info */}
+          {/* Brand Col */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center gap-2">
               <span className="font-serif text-3xl font-black text-amber-400 tracking-tight">
@@ -42,16 +46,7 @@ export const Footer: React.FC = () => {
             </div>
             
             <p className="text-xs text-stone-400 leading-relaxed max-w-sm">
-              Welcome to Shruthi Fashion! Since 2018, we have been helping you look stylish with trendy and affordable fashion collections. Discover a wide range of kurtis, salwar sets, coord sets, nightwear, western wear, jeans, leggings, and more.
-              We are committed to bringing you the latest fashion trends, quality products, and affordable prices for every occasion.
-              
-              Our Store Locations
-
-              Branch 1 – TVS Nagar
-              TVS Nagar, Coimbatore, Tamil Nadu – 641025
-
-              Branch 2 – Koundampalayam
-              Koundampalayam, Coimbatore, Tamil Nadu – 641030
+              Your neighborhood fashion destination. Specializing in daily & festive kurtis, maternity feeding kurtis, western wear, comfort stretch jeans, leggings, and grand bridal shawls.
             </p>
 
             <div className="text-xs text-stone-400 space-y-1.5 pt-1">
@@ -78,6 +73,7 @@ export const Footer: React.FC = () => {
                 <Instagram className="w-3.5 h-3.5 text-rose-400" />
                 <span>@{SHOP_INFO.instagramHandle}</span>
               </a>
+
               <a
                 href={SHOP_INFO.youtubeUrl}
                 target="_blank"
@@ -90,7 +86,7 @@ export const Footer: React.FC = () => {
             </div>
           </div>
 
-          {/* Kurtis Categories */}
+          {/* Kurtis Collection */}
           <div className="space-y-3 text-xs">
             <p className="font-bold text-white uppercase tracking-wider text-[11px]">
               Kurtis Collection
@@ -98,7 +94,7 @@ export const Footer: React.FC = () => {
             <ul className="space-y-2 text-stone-400">
               <li>
                 <button
-                  onClick={() => handleCategoryClick('Kurtis', 'Straight Cut Kurti')}
+                  onClick={() => handleNav('Kurtis', 'Straight Cut Kurti')}
                   className="hover:text-amber-400 transition-colors cursor-pointer text-left"
                 >
                   Straight Cut Kurti
@@ -106,7 +102,7 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <button
-                  onClick={() => handleCategoryClick('Kurtis', 'Short Kurtis')}
+                  onClick={() => handleNav('Kurtis', 'Short Kurtis')}
                   className="hover:text-amber-400 transition-colors cursor-pointer text-left"
                 >
                   Short Kurtis & Tunics
@@ -114,7 +110,7 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <button
-                  onClick={() => handleCategoryClick('Kurtis', 'Umbrella Kurti')}
+                  onClick={() => handleNav('Kurtis', 'Umbrella Kurti')}
                   className="hover:text-amber-400 transition-colors cursor-pointer text-left"
                 >
                   Umbrella & Flared Kurti
@@ -122,7 +118,7 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <button
-                  onClick={() => handleCategoryClick('Kurtis', 'Feeding Kurti')}
+                  onClick={() => handleNav('Kurtis', 'Feeding Kurti')}
                   className="hover:text-amber-400 transition-colors cursor-pointer text-left font-semibold text-amber-300"
                 >
                   Feeding Kurti (Maternity)
@@ -131,7 +127,7 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Bottom & Western */}
+          {/* Bottom Wear & Western */}
           <div className="space-y-3 text-xs">
             <p className="font-bold text-white uppercase tracking-wider text-[11px]">
               Bottom & Western
@@ -139,7 +135,7 @@ export const Footer: React.FC = () => {
             <ul className="space-y-2 text-stone-400">
               <li>
                 <button
-                  onClick={() => handleCategoryClick('Bottom Wear', 'Jeans')}
+                  onClick={() => handleNav('Bottom Wear', 'Jeans')}
                   className="hover:text-amber-400 transition-colors cursor-pointer text-left"
                 >
                   Stretch Denim Jeans
@@ -147,7 +143,7 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <button
-                  onClick={() => handleCategoryClick('Bottom Wear', 'Leggings')}
+                  onClick={() => handleNav('Bottom Wear', 'Leggings')}
                   className="hover:text-amber-400 transition-colors cursor-pointer text-left"
                 >
                   4-Way Cotton Leggings
@@ -155,7 +151,7 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <button
-                  onClick={() => handleCategoryClick('Bottom Wear', 'Ankle Fit')}
+                  onClick={() => handleNav('Bottom Wear', 'Ankle Fit')}
                   className="hover:text-amber-400 transition-colors cursor-pointer text-left"
                 >
                   Ankle Fit Cigarette Pants
@@ -163,7 +159,7 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <button
-                  onClick={() => handleCategoryClick('Bottom Wear', 'Shimmer')}
+                  onClick={() => handleNav('Bottom Wear', 'Shimmer')}
                   className="hover:text-amber-400 transition-colors cursor-pointer text-left"
                 >
                   Festive Shimmer Pants
@@ -171,7 +167,7 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <button
-                  onClick={() => handleCategoryClick('Bottom Wear', 'Palazzo')}
+                  onClick={() => handleNav('Bottom Wear', 'Palazzo')}
                   className="hover:text-amber-400 transition-colors cursor-pointer text-left"
                 >
                   Flared Rayon Palazzo
@@ -179,7 +175,7 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <button
-                  onClick={() => handleCategoryClick('Western Wear', 'Western Wear')}
+                  onClick={() => handleNav('Western Wear', 'Western Wear')}
                   className="hover:text-amber-400 transition-colors cursor-pointer text-left"
                 >
                   Western Tops & Dresses
@@ -188,7 +184,7 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Shawls & Timings */}
+          {/* Shawls & Store Hours */}
           <div className="space-y-3 text-xs">
             <p className="font-bold text-white uppercase tracking-wider text-[11px]">
               Shawls & Store Info
@@ -196,7 +192,7 @@ export const Footer: React.FC = () => {
             <ul className="space-y-2 text-stone-400">
               <li>
                 <button
-                  onClick={() => handleCategoryClick('Shawls & Dupattas', 'Regular Shawl')}
+                  onClick={() => handleNav('Shawls & Dupattas', 'Regular Shawl')}
                   className="hover:text-amber-400 transition-colors cursor-pointer text-left"
                 >
                   Regular Daily Shawls
@@ -204,7 +200,7 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <button
-                  onClick={() => handleCategoryClick('Shawls & Dupattas', 'Grand Shawls')}
+                  onClick={() => handleNav('Shawls & Dupattas', 'Grand Shawls')}
                   className="hover:text-amber-400 transition-colors cursor-pointer text-left"
                 >
                   Grand Festive & Brocade Shawls
@@ -218,7 +214,7 @@ export const Footer: React.FC = () => {
 
         </div>
 
-        {/* Bottom bar with owner secret unlock */}
+        {/* Quiet Sub-footer */}
         <div className="pt-8 border-t border-stone-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-stone-500">
           <div className="flex items-center gap-1.5 flex-wrap">
             <span>© 2026</span>
@@ -230,7 +226,7 @@ export const Footer: React.FC = () => {
             >
               @shruthi fashion
             </button>
-            <span>· All rights reserved. Websoft Developer.</span>
+            <span>· All rights reserved. Edayarpalayam Road - 641030.</span>
           </div>
 
           <div className="flex items-center gap-4">

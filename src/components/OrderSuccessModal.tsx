@@ -49,7 +49,7 @@ export const OrderSuccessModal: React.FC = () => {
           {/* Order Content Stage */}
           <div className="p-5 sm:p-8 space-y-5 text-xs text-stone-700">
             
-            {/* Automatic Confirmation Notice (Customer doesn't need to click WhatsApp) */}
+            {/* Automatic WhatsApp Confirmation Notice (No button clicking needed from customer) */}
             <div className="p-4 bg-emerald-50/90 border border-emerald-200 rounded-xl flex items-start gap-3">
               <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
                 <CheckCircle2 className="w-4 h-4 text-white" />

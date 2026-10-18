@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapPin, Phone, MessageCircle, Clock, Navigation, Instagram, Youtube, Sparkles, CheckCircle2 } from 'lucide-react';
+import { MapPin, Phone, MessageCircle, Clock, Navigation, Instagram, Youtube, Sparkles } from 'lucide-react';
 import { SHOP_INFO } from '../data/products';
 
 export const StoreInfoSection: React.FC = () => {
@@ -9,12 +9,7 @@ export const StoreInfoSection: React.FC = () => {
         
         {/* Section Header */}
         <div className="max-w-3xl">
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-800">
-            <span></span>
-            <span aria-hidden="true">·</span>
-            <span></span>
-          </div>
-          <h2 className="text-3xl sm:text-4xl font-serif font-black text-amber-950 mt-1">
+          <h2 className="text-3xl sm:text-4xl font-serif font-black text-amber-950">
             Visit Shruthi Fashion Store
           </h2>
           <p className="text-stone-600 text-sm sm:text-base mt-2">
@@ -43,7 +38,7 @@ export const StoreInfoSection: React.FC = () => {
                   1st Floor in City Cake Shop, Near Balaji Textiles
                 </p>
                 <p className="text-stone-700 text-sm mt-0.5">
-                  Edayarpalayam Road, Kovundampalayam, Coimbatore, Tamil Nadu – <strong>641030</strong>
+                  Edayarpalayam Road, Tamil Nadu – <strong>641030</strong>
                 </p>
               </div>
 
@@ -72,7 +67,7 @@ export const StoreInfoSection: React.FC = () => {
               </a>
 
               <a
-                href="https://maps.google.com/?q=Kovundampalayam+Coimbatore"
+                href="https://maps.google.com/?q=Shruthi+Fashion+Edayarpalayam+Road"
                 target="_blank"
                 rel="noreferrer"
                 className="px-4 py-2.5 bg-white hover:bg-stone-100 border border-stone-300 text-stone-800 text-xs sm:text-sm font-medium rounded-md transition-colors flex items-center gap-1.5"
@@ -137,26 +132,6 @@ export const StoreInfoSection: React.FC = () => {
                     Subscribe →
                   </span>
                 </a>
-              </div>
-            </div>
-
-            {/* In-store assurance perks */}
-            <div className="pt-4 border-t border-stone-800 grid grid-cols-2 gap-3 text-[11px] text-stone-300">
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span>Trail Room Available</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span>Maternity Feeding Advice</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span>Custom Alterations</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span>GPay / PhonePe Accepted</span>
               </div>
             </div>
           </div>
