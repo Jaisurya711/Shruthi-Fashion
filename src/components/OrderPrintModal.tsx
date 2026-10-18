@@ -16,7 +16,8 @@ import {
   Edit3,
   Sparkles,
   RotateCcw,
-  Check
+  Check,
+  ExternalLink
 } from 'lucide-react';
 import { UserOrder, Address } from '../types/store';
 
@@ -82,6 +83,48 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
   }, []);
 
   if (!order && !toAddress) return null;
+
+  // Open the courier label in a dedicated clean Chrome tab/page to print
+  const handlePrintInNewChromePage = () => {
+    // 1. Save active address and order info into localStorage for instant retrieval
+    const labelData = {
+      toAddress,
+      labelOrderNo,
+      isCod,
+      codAmount
+    };
+    try {
+      localStorage.setItem('shruthi_active_print_label', JSON.stringify(labelData));
+    } catch {}
+
+    // 2. Prepare query string params so it loads reliably in any new window/tab
+    const params = new URLSearchParams();
+    params.set('action', 'print-label');
+    params.set('toName', toAddress.fullName || '');
+    params.set('toPhone', toAddress.phone || '');
+    params.set('toStreet', toAddress.street || '');
+    params.set('toArea', toAddress.area || '');
+    params.set('toCity', toAddress.city || '');
+    params.set('toPincode', toAddress.pincode || '');
+    params.set('toState', toAddress.state || 'Tamil Nadu');
+    params.set('orderId', labelOrderNo || '');
+    params.set('t', Date.now().toString());
+
+    const printUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+
+    // 3. Open in another Chrome page / tab
+    const newTab = window.open(printUrl, '_blank');
+    if (!newTab || newTab.closed || typeof newTab.closed === 'undefined') {
+      // Fallback if popup blocker is active
+      const link = document.createElement('a');
+      link.href = printUrl;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
 
   const handlePrint = () => {
     const prevTitle = document.title;
@@ -214,13 +257,34 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
               </button>
             )}
 
-            <button
-              onClick={handlePrint}
-              className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 cursor-pointer shadow-sm transition-colors"
-            >
-              <Printer className="w-3.5 h-3.5" />
-              <span>Print Label</span>
-            </button>
+            {view === 'courier_label' ? (
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={handlePrintInNewChromePage}
+                  className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 cursor-pointer shadow-sm transition-colors"
+                  title="Open courier label in another Chrome page to print"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Print in New Chrome Page</span>
+                </button>
+                <button
+                  onClick={handlePrint}
+                  className="px-2.5 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white text-xs font-medium rounded-lg flex items-center gap-1 cursor-pointer transition-colors"
+                  title="Quick Print directly on current page"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>Quick Print</span>
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handlePrint}
+                className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 cursor-pointer shadow-sm transition-colors"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print Invoice</span>
+              </button>
+            )}
 
             <button
               onClick={onClose}
@@ -401,9 +465,15 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
                       <span>Edit TO Address from WhatsApp</span>
                     </button>
                     <span className="text-stone-300">|</span>
-                    <span className="font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 text-[10px]">
-                      🖨️ Landscape Mode (1 Sheet · A5 / 4×6")
-                    </span>
+                    <button
+                      type="button"
+                      onClick={handlePrintInNewChromePage}
+                      className="font-bold text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-2 py-0.5 rounded border border-blue-200 text-[10px] flex items-center gap-1 cursor-pointer transition-colors"
+                      title="Open courier label in another Chrome page to print"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      <span>Open in Another Chrome Page to Print</span>
+                    </button>
                   </div>
                 </div>
 

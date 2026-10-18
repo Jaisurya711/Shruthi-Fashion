@@ -201,34 +201,76 @@ app.post('/api/verify-payment', (req, res) => {
   }
 });
 
-// STEP 2B: Product Catalog Synchronization API (Multi-Device Sync)
+// STEP 2B: Product Catalog & Store Configuration Synchronization API (Multi-Device Sync)
 let cachedProducts: any[] | null = null;
+let cachedHeroConfig: any = null;
 let catalogLastUpdated: number = Date.now();
 
 app.get('/api/products', (req, res) => {
   return res.status(200).json({
     success: true,
     products: cachedProducts,
+    heroConfig: cachedHeroConfig,
     lastUpdated: catalogLastUpdated,
   });
 });
 
 app.post('/api/products', (req, res) => {
   try {
-    const { products } = req.body || {};
+    const { products, heroConfig } = req.body || {};
+    let updated = false;
+
     if (Array.isArray(products) && products.length > 0) {
       cachedProducts = products;
+      updated = true;
+    }
+    if (heroConfig && typeof heroConfig === 'object') {
+      cachedHeroConfig = heroConfig;
+      updated = true;
+    }
+
+    if (updated) {
       catalogLastUpdated = Date.now();
       return res.status(200).json({
         success: true,
-        count: products.length,
+        count: cachedProducts?.length || 0,
+        hasHeroConfig: !!cachedHeroConfig,
         lastUpdated: catalogLastUpdated,
-        message: 'Catalog updated successfully and will be served to all devices.'
+        message: 'Store catalog and configuration updated successfully.'
       });
     }
-    return res.status(400).json({ success: false, error: 'Products array is required.' });
+
+    return res.status(400).json({ success: false, error: 'Products array or heroConfig is required.' });
   } catch (err: any) {
-    return res.status(500).json({ success: false, error: err?.message || 'Failed to update products' });
+    return res.status(500).json({ success: false, error: err?.message || 'Failed to update store data' });
+  }
+});
+
+// Mainframe Hero Banner API
+app.get('/api/hero', (req, res) => {
+  return res.status(200).json({
+    success: true,
+    heroConfig: cachedHeroConfig,
+    lastUpdated: catalogLastUpdated,
+  });
+});
+
+app.post('/api/hero', (req, res) => {
+  try {
+    const { heroConfig } = req.body || {};
+    if (heroConfig && typeof heroConfig === 'object') {
+      cachedHeroConfig = heroConfig;
+      catalogLastUpdated = Date.now();
+      return res.status(200).json({
+        success: true,
+        heroConfig: cachedHeroConfig,
+        lastUpdated: catalogLastUpdated,
+        message: 'Mainframe hero banner updated successfully and will be served to all devices.'
+      });
+    }
+    return res.status(400).json({ success: false, error: 'Valid heroConfig object is required.' });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message || 'Failed to update hero config' });
   }
 });
 

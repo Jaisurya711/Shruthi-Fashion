@@ -35,6 +35,7 @@ import { Product, UserOrder } from '../types/store';
 import { FABRICS, OCCASIONS, HERO_IMAGE } from '../data/products';
 import { OrderPrintModal } from './OrderPrintModal';
 import { getCustomerWhatsAppOrderUrl } from '../services/notificationService';
+import { syncHeroConfigToCloud } from '../services/catalogSyncService';
 
 export const StoreManagerModal: React.FC = () => {
   const {
@@ -98,6 +99,10 @@ export const StoreManagerModal: React.FC = () => {
 
   // Curated boutique photo presets for hero
   const heroPresets = [
+    {
+      title: 'Diwali Festive Sale Special',
+      url: 'https://images.unsplash.com/photo-1607344645866-009c320c5ab8?auto=format&fit=crop&w=1600&q=80'
+    },
     {
       title: 'Coimbatore Silk & Festive Boutique',
       url: HERO_IMAGE
@@ -296,14 +301,19 @@ export const StoreManagerModal: React.FC = () => {
     setTimeout(() => setSuccessToast(''), 4000);
   };
 
-  const handleSaveHeroConfig = (e: React.FormEvent) => {
+  const handleSaveHeroConfig = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!heroForm.imageUrl.trim()) return;
     updateHeroConfig(heroForm);
-    showToast('Main frame banner updated! Check your homepage.');
+    try {
+      const res = await syncHeroConfigToCloud(heroForm);
+      showToast(res.message || 'Main frame banner saved & synced to Cloud! Mobile devices will now show this update.');
+    } catch {
+      showToast('Main frame banner saved.');
+    }
   };
 
-  const handleResetHeroConfig = () => {
+  const handleResetHeroConfig = async () => {
     const defaultHero = {
       imageUrl: HERO_IMAGE,
       title: 'Shruthi Fashion',
@@ -312,7 +322,10 @@ export const StoreManagerModal: React.FC = () => {
     };
     updateHeroConfig(defaultHero);
     setHeroForm(defaultHero);
-    showToast('Main frame image restored to default.');
+    try {
+      await syncHeroConfigToCloud(defaultHero);
+    } catch {}
+    showToast('Main frame image restored to default and synced across devices.');
   };
 
   const handleAddCategorySubmit = (e: React.FormEvent) => {

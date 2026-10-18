@@ -99,7 +99,18 @@ const MainStoreApp: React.FC = () => {
   );
 };
 
+import { StandaloneCourierLabelPage } from './components/StandaloneCourierLabelPage';
+
 export default function App() {
+  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  const isPrintLabelAction =
+    searchParams?.get('action') === 'print-label' ||
+    (typeof window !== 'undefined' && window.location.pathname === '/print-label');
+
+  if (isPrintLabelAction) {
+    return <StandaloneCourierLabelPage />;
+  }
+
   return (
     <StoreProvider>
       <MainStoreApp />
