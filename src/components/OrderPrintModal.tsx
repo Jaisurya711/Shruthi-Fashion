@@ -5,13 +5,12 @@ import {
   FileText,
   Tag,
   Truck,
-  CheckCircle2,
   Phone,
-  MapPin,
-  Building2,
+  CheckCircle2,
   Calendar,
   CreditCard,
-  Barcode as BarcodeIcon
+  MapPin,
+  Scissors
 } from 'lucide-react';
 import { UserOrder } from '../types/store';
 
@@ -23,7 +22,7 @@ interface OrderPrintModalProps {
 
 export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
   order,
-  initialView = 'invoice',
+  initialView = 'courier_label',
   onClose
 }) => {
   const [view, setView] = useState<'invoice' | 'courier_label'>(initialView);
@@ -34,54 +33,57 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
     window.print();
   };
 
-  // Barcode pattern generator for visual courier label
+  // Barcode pattern for visual courier routing sticker
   const barcodePattern = [
     3, 1, 2, 4, 1, 3, 2, 1, 4, 2, 1, 3, 2, 4, 1, 2, 3, 1, 4, 2, 3, 1, 2, 4,
-    1, 3, 2, 1, 4, 2, 1, 3, 2, 4, 1, 2, 3, 1, 4, 2, 3, 1, 2, 4, 1, 3, 2
+    1, 3, 2, 1, 4, 2, 1, 3, 2, 4, 1, 2, 3, 1, 4, 2, 3, 1, 2, 4, 1, 3, 2, 3, 1, 4
   ];
+
+  const totalQuantity = order.items.reduce((s, i) => s + i.quantity, 0);
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-stone-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in">
-      <div className="relative w-full max-w-3xl bg-white rounded-xl shadow-2xl border border-stone-300 flex flex-col max-h-[92vh] overflow-hidden my-auto">
+      <div className="relative w-full max-w-3xl bg-white rounded-xl shadow-2xl border border-stone-300 flex flex-col max-h-[94vh] overflow-hidden my-auto">
         
         {/* Top Control Bar (Hidden during print) */}
         <div className="p-4 bg-stone-900 text-white flex items-center justify-between no-print border-b border-stone-800">
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setView('invoice')}
-              className={`px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
-                view === 'invoice'
-                  ? 'bg-amber-600 text-white'
-                  : 'bg-stone-800 text-stone-300 hover:text-white'
-              }`}
-            >
-              <FileText className="w-3.5 h-3.5" />
-              <span>Tax Invoice / Bill</span>
-            </button>
-            <button
               onClick={() => setView('courier_label')}
-              className={`px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
                 view === 'courier_label'
-                  ? 'bg-amber-600 text-white'
+                  ? 'bg-amber-600 text-white shadow-xs'
                   : 'bg-stone-800 text-stone-300 hover:text-white'
               }`}
             >
               <Tag className="w-3.5 h-3.5" />
               <span>Courier Delivery Label</span>
             </button>
+            <button
+              onClick={() => setView('invoice')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
+                view === 'invoice'
+                  ? 'bg-amber-600 text-white shadow-xs'
+                  : 'bg-stone-800 text-stone-300 hover:text-white'
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>Tax Invoice / Bill</span>
+            </button>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               onClick={handlePrint}
-              className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded flex items-center gap-1.5 cursor-pointer shadow-sm transition-colors"
+              className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 cursor-pointer shadow-sm transition-colors"
             >
               <Printer className="w-3.5 h-3.5" />
-              <span>Print Document</span>
+              <span>Print Label</span>
             </button>
             <button
               onClick={onClose}
-              className="p-1.5 text-stone-400 hover:text-white cursor-pointer rounded"
+              className="p-1.5 text-stone-400 hover:text-white cursor-pointer rounded-lg hover:bg-stone-800 transition-colors"
+              title="Close"
             >
               <X className="w-5 h-5" />
             </button>
@@ -90,9 +92,165 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
 
         {/* Scrollable Document Preview Area */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-stone-100/70">
-          <div className="printable-document bg-white p-6 sm:p-8 rounded-lg shadow-sm border border-stone-200 max-w-2xl mx-auto text-stone-900 font-sans">
+          <div className="printable-document bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-stone-200 max-w-2xl mx-auto text-stone-900 font-sans">
             
-            {/* VIEW 1: TAX INVOICE / ORDER BILL */}
+            {/* VIEW 1: COURIER DELIVERY SHIPPING LABEL (MATCHES PARCEL POUCH EXACTLY) */}
+            {view === 'courier_label' && (
+              <div className="courier-shipping-label border-2 border-dashed border-stone-400 p-2 sm:p-3 rounded-lg bg-white">
+                
+                {/* Cut helper notice (visible in web preview) */}
+                <div className="no-print flex items-center justify-between text-[11px] text-stone-500 pb-2 mb-2 border-b border-stone-200">
+                  <span className="flex items-center gap-1">
+                    <Scissors className="w-3.5 h-3.5" /> Cut along dashed border to stick on courier polybag / parcel
+                  </span>
+                  <span className="font-semibold text-stone-700">Size: Standard Courier Sticker (4×6")</span>
+                </div>
+
+                {/* The Physical Courier Sticker Box */}
+                <div className="border-3 border-black p-4 sm:p-5 bg-white space-y-4 text-black font-sans">
+                  
+                  {/* TOP ROW: [TOP LEFT: Courier / Booking Details] & [TOP RIGHT: TO ADDRESS CORNER] */}
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 pb-3 border-b-2 border-black">
+                    
+                    {/* TOP LEFT (5 cols): Courier Service & Booking Meta */}
+                    <div className="sm:col-span-5 flex flex-col justify-between pr-2 border-b sm:border-b-0 sm:border-r-2 border-black pb-3 sm:pb-0">
+                      <div>
+                        {/* Courier Dispatch Stamp */}
+                        <div className="inline-block px-2.5 py-1 bg-red-600 text-white font-black text-xs uppercase tracking-wider rounded-xs mb-2">
+                          SPEED COURIER / AIR CARGO
+                        </div>
+                        <div className="text-[11px] leading-tight font-semibold text-stone-800 space-y-0.5">
+                          <p><strong className="text-black">SERVICE:</strong> SURFACE APPAREL</p>
+                          <p><strong className="text-black">DATE:</strong> {order.date}</p>
+                          <p><strong className="text-black">ORDER ID:</strong> #{order.orderNumber}</p>
+                          <p><strong className="text-black">PIECES:</strong> {totalQuantity} {totalQuantity === 1 ? 'Item' : 'Items'}</p>
+                          <p><strong className="text-black">WEIGHT:</strong> ~{(0.35 * totalQuantity).toFixed(2)} KG</p>
+                        </div>
+                      </div>
+
+                      {/* Payment Status Stamp */}
+                      <div className="mt-3 pt-2 border-t border-black/40">
+                        {order.paymentMethod === 'COD' ? (
+                          <div className="px-2 py-1 bg-amber-50 border-2 border-amber-700 text-amber-900 text-center font-black text-xs uppercase">
+                            COLLECT CASH: ₹{order.total}
+                          </div>
+                        ) : (
+                          <div className="px-2 py-1 bg-emerald-50 border-2 border-black text-black text-center font-black text-xs uppercase tracking-wider">
+                            PREPAID · DO NOT COLLECT CASH
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* TOP RIGHT (7 cols): TO ADDRESS (PLACED AT TOP RIGHT SIDE CORNER) */}
+                    <div className="sm:col-span-7 pl-0 sm:pl-3 space-y-1">
+                      <div className="flex items-center justify-between border-b border-black pb-1 mb-1.5">
+                        <span className="font-black text-sm uppercase tracking-wider text-black">
+                          TO ADDRESS:
+                        </span>
+                        <span className="text-[10px] font-bold bg-black text-white px-1.5 py-0.5 uppercase">
+                          DESTINATION
+                        </span>
+                      </div>
+
+                      <div className="text-sm font-black uppercase text-black tracking-wide leading-tight">
+                        TO,
+                      </div>
+                      <div className="text-base font-black uppercase text-black leading-snug">
+                        {order.address.fullName}
+                      </div>
+
+                      <div className="text-xs font-bold text-black leading-tight space-y-0.5 pt-0.5">
+                        <p>{order.address.street}</p>
+                        <p>{order.address.area}</p>
+                        <p className="uppercase">{order.address.city}, {order.address.state || 'Tamil Nadu'}</p>
+                      </div>
+
+                      {/* Highlighted PIN & Contact */}
+                      <div className="pt-2 mt-2 border-t-2 border-black space-y-1">
+                        <div className="flex items-baseline justify-between">
+                          <span className="text-xs font-black uppercase text-black">
+                            PIN CODE:
+                          </span>
+                          <span className="font-mono text-xl sm:text-2xl font-black text-black tracking-widest bg-yellow-100/80 px-2 py-0.5 border border-black/30 rounded-xs">
+                            {order.address.pincode}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between text-xs pt-1">
+                          <span className="font-bold text-black">PH / MOBILE:</span>
+                          <span className="font-mono text-sm font-black text-black">
+                            {order.address.phone}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* BOTTOM ROW: [LEFT BOTTOM: DEFAULT FROM ADDRESS] & [BOTTOM RIGHT: BARCODE & ROUTING] */}
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-1 items-start">
+                    
+                    {/* LEFT BOTTOM DEFAULT ADDRESS (WORD-FOR-WORD AS REQUESTED) */}
+                    <div className="sm:col-span-6 pr-0 sm:pr-3 border-b sm:border-b-0 sm:border-r-2 border-black pb-3 sm:pb-0 space-y-0.5 text-xs font-semibold text-black leading-snug">
+                      <p className="font-black text-sm uppercase tracking-wider border-b border-black pb-1 mb-1">
+                        FROM ADDRESS:
+                      </p>
+                      
+                      {/* Exact user requested block */}
+                      <p className="font-black text-xs uppercase">FROM,</p>
+                      <p className="font-black text-sm uppercase text-black tracking-wide">
+                        SHRUTHI FASHION
+                      </p>
+                      <p>1st floor (City cake shop)</p>
+                      <p>edayarpalayam road,</p>
+                      <p>Kovundampalayam,</p>
+                      <p>Coimbatore. TN</p>
+                      <p className="font-mono font-bold text-xs mt-1">pin code:641030</p>
+                      <p className="font-mono font-bold text-xs">Ph:9962278349</p>
+                    </div>
+
+                    {/* BOTTOM RIGHT: BARCODE, AWB ROUTING & INSTRUCTIONS */}
+                    <div className="sm:col-span-6 pl-0 sm:pl-2 flex flex-col justify-between text-center space-y-2">
+                      <p className="text-[10px] font-black uppercase tracking-wider text-stone-700">
+                        COURIER TRACKING / AWB ROUTING
+                      </p>
+
+                      {/* Scannable Visual Barcode */}
+                      <div className="py-2 px-1 flex items-center justify-center gap-[2px] h-12 bg-white border border-black rounded-xs">
+                        {barcodePattern.map((width, i) => (
+                          <span
+                            key={i}
+                            className="bg-black h-8 inline-block"
+                            style={{ width: `${Math.min(width * 2, 6)}px` }}
+                          />
+                        ))}
+                      </div>
+
+                      <p className="font-mono font-black text-xs tracking-widest text-black">
+                        AWB: {order.trackingNumber || `SF-${order.address.pincode}-${order.orderNumber}`}
+                      </p>
+
+                      <div className="pt-1 border-t border-black/40 text-[10px] font-bold text-stone-800 uppercase flex justify-between">
+                        <span>DEST: {order.address.city || 'COIMBATORE'}</span>
+                        <span className="text-red-700">HANDLE WITH CARE</span>
+                      </div>
+                    </div>
+
+                  </div>
+
+                </div>
+
+                {/* Footer dispatch tag */}
+                <div className="pt-2 text-[10px] text-stone-500 flex justify-between uppercase font-mono">
+                  <span>Shruthi Fashion Coimbatore · Dispatch Dept</span>
+                  <span>Printed via Shruthi Fashion Portal</span>
+                </div>
+
+              </div>
+            )}
+
+            {/* VIEW 2: TAX INVOICE / ORDER BILL */}
             {view === 'invoice' && (
               <div className="space-y-6">
                 {/* Invoice Header */}
@@ -104,14 +262,11 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
                     <p className="text-xs text-stone-600 font-medium mt-0.5">
                       Women's Ethnic Wear · Daily Collections · Coimbatore Handlooms
                     </p>
-                    <p className="text-xs text-stone-600 mt-1">
-                      Edayarpalayam Road, Kovundampalayam, Coimbatore - 641030, Tamil Nadu
+                    <p className="text-xs text-stone-700 mt-1">
+                      1st floor (City cake shop), Edayarpalayam Road, Kovundampalayam, Coimbatore - 641030, Tamil Nadu
                     </p>
-                    <p className="text-xs text-stone-600">
-                      Phone: +91 9894088349 · Email: shruthifashion01@gmail.com
-                    </p>
-                    <p className="text-[11px] font-mono text-stone-500 mt-0.5">
-                      GSTIN / Reg: 33ABCPS1234F1Z5
+                    <p className="text-xs text-stone-700">
+                      Phone: +91 9962278349 · WhatsApp: +91 9894088349
                     </p>
                   </div>
 
@@ -151,52 +306,46 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
                     </p>
                   </div>
 
-                  <div className="border-t sm:border-t-0 sm:border-l border-stone-200 pt-3 sm:pt-0 sm:pl-4">
+                  <div>
                     <p className="font-bold uppercase tracking-wider text-stone-500 text-[10px] mb-1">
-                      Dispatch &amp; Delivery Method:
+                      Dispatch &amp; Dispatcher Details:
                     </p>
-                    <p className="font-semibold text-stone-900">
-                      {order.courierPartner || 'Shruthi Fashion Express Courier'}
+                    <p className="font-semibold text-stone-900">Shruthi Fashion Dispatch Unit</p>
+                    <p className="text-stone-600">Courier Partner: {order.courierPartner || 'Speed Courier / ST Courier'}</p>
+                    <p className="text-stone-600">
+                      Tracking No: <span className="font-mono font-semibold text-stone-900">{order.trackingNumber || 'Assigned upon pickup'}</span>
                     </p>
-                    <p className="text-stone-600">Tracking Ref: <span className="font-mono font-bold text-stone-900">{order.trackingNumber || 'SF-TRK-COIMBATORE'}</span></p>
-                    <p className="text-stone-600">Delivery Timeline: {order.estimatedDelivery || '2 - 4 Business Days'}</p>
-                    <p className="text-stone-600 mt-1">
-                      Status: <strong className="text-emerald-700">{order.deliveryStatus || 'Confirmed & Dispatched'}</strong>
-                    </p>
+                    <p className="text-stone-600">Origin: Kovundampalayam, Coimbatore</p>
                   </div>
                 </div>
 
                 {/* Items Table */}
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border border-stone-300">
-                    <thead className="bg-stone-100 text-stone-800 uppercase font-bold text-[10px] border-b border-stone-300">
+                <div className="border border-stone-200 rounded overflow-hidden">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-stone-900 text-white text-[11px] uppercase tracking-wider">
                       <tr>
-                        <th className="py-2.5 px-3 w-8">#</th>
+                        <th className="py-2.5 px-3">#</th>
                         <th className="py-2.5 px-3">Item Description</th>
-                        <th className="py-2.5 px-3">Size / Color</th>
-                        <th className="py-2.5 px-3 text-right">Rate</th>
+                        <th className="py-2.5 px-3">Size &amp; Color</th>
+                        <th className="py-2.5 px-3 text-right">Price</th>
                         <th className="py-2.5 px-3 text-center">Qty</th>
-                        <th className="py-2.5 px-3 text-right">Amount</th>
+                        <th className="py-2.5 px-3 text-right">Total</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-stone-200 text-stone-800">
-                      {order.items.map((item, idx) => (
-                        <tr key={idx} className="hover:bg-stone-50/50">
-                          <td className="py-2.5 px-3 text-stone-500">{idx + 1}</td>
+                    <tbody className="divide-y divide-stone-200">
+                      {order.items.map((item, index) => (
+                        <tr key={index} className="hover:bg-stone-50/50">
+                          <td className="py-2.5 px-3 text-stone-500 font-mono">{index + 1}</td>
                           <td className="py-2.5 px-3 font-semibold text-stone-900">
                             {item.product.title}
-                            <span className="block text-[10px] font-normal text-stone-500">
-                              {item.product.fabric} · {item.product.category}
-                            </span>
                           </td>
-                          <td className="py-2.5 px-3">
-                            {item.selectedSize}
-                            {item.selectedColor ? ` / ${item.selectedColor}` : ''}
+                          <td className="py-2.5 px-3 text-stone-600">
+                            {item.selectedSize} / {item.selectedColor}
                           </td>
-                          <td className="py-2.5 px-3 text-right tabular-nums">
+                          <td className="py-2.5 px-3 text-right tabular-nums text-stone-700">
                             ₹{item.product.price.toLocaleString('en-IN')}
                           </td>
-                          <td className="py-2.5 px-3 text-center font-bold">
+                          <td className="py-2.5 px-3 text-center tabular-nums text-stone-900 font-medium">
                             {item.quantity}
                           </td>
                           <td className="py-2.5 px-3 text-right font-semibold tabular-nums text-stone-900">
@@ -218,7 +367,7 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
                       • 7 days size exchange for unworn apparel with original tags intact.
                     </p>
                     <p>
-                      • In case of any courier package issues, please reach our Coimbatore helpdesk via WhatsApp at +91 9894088349.
+                      • In case of any courier package issues, please reach our Coimbatore helpdesk at +91 9962278349.
                     </p>
                   </div>
 
@@ -260,115 +409,6 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
               </div>
             )}
 
-            {/* VIEW 2: COURIER DELIVERY SHIPPING LABEL */}
-            {view === 'courier_label' && (
-              <div className="border-4 border-stone-900 rounded-lg p-5 space-y-4 max-w-lg mx-auto bg-white">
-                
-                {/* Header Badge */}
-                <div className="flex items-center justify-between border-b-2 border-stone-900 pb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-stone-900 text-white rounded flex items-center justify-center font-bold text-xs">
-                      SF
-                    </div>
-                    <div>
-                      <h2 className="font-black text-base text-stone-950 uppercase tracking-tight leading-tight">
-                        Shruthi Fashion
-                      </h2>
-                      <span className="text-[10px] text-stone-600 block">Coimbatore Dispatch Centre</span>
-                    </div>
-                  </div>
-
-                  <div className="text-right">
-                    <span className="px-2 py-0.5 bg-stone-900 text-white text-[11px] font-black uppercase tracking-wider rounded">
-                      PREPAID
-                    </span>
-                    <p className="text-[10px] font-bold text-emerald-700 mt-0.5">
-                      DO NOT COLLECT CASH
-                    </p>
-                  </div>
-                </div>
-
-                {/* Courier Partner & Routing Barcode */}
-                <div className="border-b-2 border-stone-900 pb-3 text-center space-y-1">
-                  <div className="flex justify-between text-xs font-bold text-stone-800 px-1">
-                    <span>COURIER: {order.courierPartner || 'ST COURIER / DTDC'}</span>
-                    <span>TYPE: STANDARD SURFACE APPAREL</span>
-                  </div>
-
-                  {/* Visual Barcode Bars */}
-                  <div className="py-2 flex items-center justify-center gap-0.5 h-12 bg-stone-50 border border-stone-200 rounded">
-                    {barcodePattern.map((width, i) => (
-                      <span
-                        key={i}
-                        className="bg-stone-900 h-9 inline-block"
-                        style={{ width: `${width * 2}px` }}
-                      />
-                    ))}
-                  </div>
-
-                  <p className="font-mono font-bold text-xs tracking-widest text-stone-900">
-                    AWB / TRK: {order.trackingNumber || `SF-${order.address.pincode}-${order.orderNumber}`}
-                  </p>
-                </div>
-
-                {/* DESTINATION / SHIP TO (VERY LARGE AND CLEAR FOR COURIER) */}
-                <div className="border-2 border-stone-900 rounded-md p-3.5 bg-stone-50">
-                  <p className="font-black uppercase tracking-widest text-[11px] text-stone-500 mb-1 flex items-center gap-1.5">
-                    <Truck className="w-4 h-4 text-stone-800" />
-                    <span>DELIVER TO / RECIPIENT:</span>
-                  </p>
-
-                  <h3 className="text-lg font-black text-stone-950 uppercase">
-                    {order.address.fullName}
-                  </h3>
-
-                  <div className="text-sm font-semibold text-stone-900 mt-1 leading-snug">
-                    <p>{order.address.street}</p>
-                    <p>{order.address.area}</p>
-                    <p>{order.address.city}, {order.address.state || 'Tamil Nadu'}</p>
-                  </div>
-
-                  {/* BIG PIN CODE BOX */}
-                  <div className="mt-3 pt-2.5 border-t-2 border-stone-900 flex items-center justify-between">
-                    <div>
-                      <span className="text-[10px] font-black uppercase text-stone-500 block">
-                        DESTINATION PIN:
-                      </span>
-                      <span className="text-2xl font-black text-stone-950 font-mono tracking-wider">
-                        {order.address.pincode}
-                      </span>
-                    </div>
-
-                    <div className="text-right">
-                      <span className="text-[10px] font-black uppercase text-stone-500 block">
-                        CONTACT PHONE:
-                      </span>
-                      <span className="text-base font-black text-stone-950 font-mono">
-                        {order.address.phone}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* RETURN ADDRESS / SHIPPER */}
-                <div className="border-t-2 border-stone-900 pt-2.5 text-xs text-stone-700 space-y-0.5">
-                  <p className="font-bold uppercase tracking-wider text-[10px] text-stone-500">
-                    RETURN ADDRESS / SHIPPED BY:
-                  </p>
-                  <p className="font-bold text-stone-900">SHRUTHI FASHION</p>
-                  <p>Edayarpalayam Road, Kovundampalayam, Coimbatore - 641030</p>
-                  <p>Tamil Nadu, India · Ph: +91 9894088349</p>
-                </div>
-
-                {/* Package Specs */}
-                <div className="border-t border-stone-300 pt-2 flex justify-between text-[11px] font-mono text-stone-600">
-                  <span>ORDER: #{order.orderNumber}</span>
-                  <span>ITEMS: {order.items.reduce((s, i) => s + i.quantity, 0)} PCS</span>
-                  <span>WT: ~0.45 KG</span>
-                </div>
-              </div>
-            )}
-
           </div>
         </div>
 
@@ -376,3 +416,5 @@ export const OrderPrintModal: React.FC<OrderPrintModalProps> = ({
     </div>
   );
 };
+
+export default OrderPrintModal;
