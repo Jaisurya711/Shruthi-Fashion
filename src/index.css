@@ -61,8 +61,7 @@
     margin: 5mm;
   }
 
-  /* Completely hide the main application root and all background content when printing */
-  #root,
+  /* Hide the main background application ONLY when modal portal print is active */
   body.order-print-active #root,
   body.order-print-active > div:not(.order-print-portal) {
     display: none !important;
@@ -70,6 +69,17 @@
     height: 0 !important;
     max-height: 0 !important;
     overflow: hidden !important;
+  }
+
+  /* Standalone label print page: ensure #root and courier sticker are fully visible during print */
+  body.standalone-print-page #root,
+  .standalone-courier-wrapper,
+  .landscape-courier-box {
+    display: block !important;
+    visibility: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
   }
 
   /* Reset body */
@@ -96,7 +106,6 @@
     padding: 0 !important;
   }
 
-  /* Reset portal and modal containers so they don't force multiple fixed pages */
   .order-print-portal {
     display: block !important;
     position: static !important;
@@ -106,44 +115,6 @@
     background: #ffffff !important;
   }
 
-  .order-print-modal-overlay {
-    position: static !important;
-    inset: auto !important;
-    background: transparent !important;
-    backdrop-filter: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    display: block !important;
-    overflow: visible !important;
-    height: auto !important;
-    max-height: none !important;
-    width: 100% !important;
-  }
-
-  .order-print-modal-container {
-    position: static !important;
-    max-width: 100% !important;
-    max-height: none !important;
-    width: 100% !important;
-    height: auto !important;
-    border: none !important;
-    box-shadow: none !important;
-    background: #ffffff !important;
-    overflow: visible !important;
-    padding: 0 !important;
-    margin: 0 !important;
-  }
-
-  .order-print-content-scroll {
-    overflow: visible !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    background: #ffffff !important;
-    height: auto !important;
-    max-height: none !important;
-  }
-
-  /* Ensure the printable document covers page and does NOT break into multiple sheets */
   .printable-document {
     position: static !important;
     width: 100% !important;
@@ -151,50 +122,11 @@
     margin: 0 auto !important;
     padding: 0 !important;
     background: #ffffff !important;
-    box-shadow: none !important;
     border: none !important;
-    display: block !important;
+    box-shadow: none !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
     page-break-after: avoid !important;
-    page-break-before: avoid !important;
-  }
-
-  /* Physical courier parcel label in A5 landscape (210mm x 148mm) */
-  .courier-shipping-label {
-    box-sizing: border-box !important;
-    width: 100% !important;
-    max-width: 198mm !important;
-    margin: 0 auto !important;
-    padding: 0 !important;
-    border: none !important;
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
-
-  .landscape-courier-box {
-    box-sizing: border-box !important;
-    width: 100% !important;
-    max-width: 198mm !important;
-    height: 134mm !important;
-    max-height: 134mm !important;
-    border: 3px solid #000000 !important;
-    padding: 5mm 6mm !important;
-    background: #ffffff !important;
-    color: #000000 !important;
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-    overflow: hidden !important;
-    display: flex !important;
-    flex-direction: column !important;
-  }
-
-  .landscape-courier-grid {
-    display: grid !important;
-    grid-template-columns: 1fr 1.05fr !important;
-    gap: 5mm !important;
-    height: 100% !important;
-    min-height: 100% !important;
-    box-sizing: border-box !important;
+    break-after: avoid !important;
   }
 }
