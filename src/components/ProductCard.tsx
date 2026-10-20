@@ -1,0 +1,216 @@
+import React, { useState } from 'react';
+import { Heart, ShoppingBag, Star, CreditCard } from 'lucide-react';
+import { Product } from '../types/store';
+import { useStore } from '../context/StoreContext';
+
+export const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
+  const {
+    setActiveProduct,
+    addToCart,
+    toggleWishlist,
+    isWishlisted,
+    user,
+    setIsAuthOpen,
+    setPendingCheckoutAfterAuth,
+    setIsCheckoutOpen
+  } = useStore();
+  const [imgLoaded, setImgLoaded] = useState(false);
+  const [imgError, setImgError] = useState(false);
+  const wishlisted = isWishlisted(product.id);
+
+  const price = Number(product.price) || 0;
+  const originalPrice = Number(product.originalPrice) || price;
+  const discountPercent = originalPrice > price
+    ? Math.round(((originalPrice - price) / originalPrice) * 100)
+    : 0;
+
+  const handleQuickAdd = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Use first available size and color
+    addToCart(
+      product,
+      product.sizes?.[0] || 'Standard',
+      product.colors?.[0]?.name || 'Original',
+      1
+    );
+  };
+
+  const handleBuyNow = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    addToCart(
+      product,
+      product.sizes?.[0] || 'Standard',
+      product.colors?.[0]?.name || 'Original',
+      1
+    );
+    if (!user) {
+      setPendingCheckoutAfterAuth(true);
+      setIsAuthOpen(true);
+    } else {
+      setIsCheckoutOpen(true);
+    }
+  };
+
+  const displayImage = product.images?.[0] || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=600&q=80';
+  const isOutOfStock = (product.stockCount !== undefined && product.stockCount <= 0) || product.inStock === false;
+  const isLowStock = !isOutOfStock && (product.stockCount !== undefined && product.stockCount > 0 && product.stockCount <= 4);
+
+  return (
+    <article
+      role="button"
+      tabIndex={0}
+      onClick={() => setActiveProduct(product)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          setActiveProduct(product);
+        }
+      }}
+      className={`group relative flex flex-col bg-white border rounded-md overflow-hidden transition-all duration-200 hover:shadow-md cursor-pointer active:scale-[0.99] select-none touch-manipulation ${
+        isOutOfStock ? 'border-stone-200 opacity-90' : 'border-stone-200/90 hover:border-stone-300'
+      }`}
+    >
+      {/* Product Image Stage: Adapts to uploaded image proportions without cropping */}
+      <div className="relative aspect-[3/4] bg-[#F7F5F0] overflow-hidden flex items-center justify-center">
+        {/* Out of stock dark overlay */}
+        {isOutOfStock && (
+          <div className="absolute inset-0 bg-stone-900/60 z-20 flex items-center justify-center p-2 backdrop-blur-[1px]">
+            <span className="bg-stone-950/90 text-white font-bold text-xs uppercase tracking-wider px-3 py-1.5 rounded shadow-md border border-white/20">
+              Sold Out
+            </span>
+          </div>
+        )}
+
+        {/* Low Stock Urgent Badge */}
+        {isLowStock && (
+          <div className="absolute top-2 left-2 z-20">
+            <span className="bg-amber-600/95 text-white font-bold text-[10px] px-2 py-0.5 rounded shadow-xs">
+              Only {product.stockCount} Left!
+            </span>
+          </div>
+        )}
+
+        {/* Fallback container if image fails or loading */}
+        {!imgLoaded && !imgError && (
+          <div className="absolute inset-0 bg-stone-200 animate-pulse" />
+        )}
+
+        {imgError ? (
+          <div className="absolute inset-0 bg-stone-100 flex flex-col items-center justify-center p-4 text-center">
+            <span className="font-serif text-lg font-bold text-stone-700">{product.title}</span>
+            <span className="text-xs text-stone-500 mt-1">{product.fabric}</span>
+          </div>
+        ) : (
+          <>
+            {/* Ambient background blur that adapts to uploaded photo colors */}
+            <img
+              src={displayImage}
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 w-full h-full object-cover blur-xl opacity-25 scale-125 pointer-events-none"
+            />
+            {/* Primary uncropped product photo in true uploaded aspect ratio */}
+            <img
+              src={displayImage}
+              alt={product.title}
+              onLoad={() => setImgLoaded(true)}
+              onError={() => setImgError(true)}
+              referrerPolicy="no-referrer"
+              loading="lazy"
+              className={`relative z-10 max-w-full max-h-full w-auto h-auto object-contain transition-transform duration-500 group-hover:scale-105 ${
+                isOutOfStock ? 'grayscale-[30%]' : ''
+              }`}
+            />
+          </>
+        )}
+      </div>
+
+      {/* Product Content Details */}
+      <div className="p-3.5 flex flex-col flex-1 justify-between bg-white">
+        {/* Category & Subcategory Text + Wishlist Action */}
+        <div>
+          <div className="flex items-center justify-between text-[11px] uppercase tracking-wider mb-1">
+            <div className="flex items-center gap-1.5 truncate">
+              <span className="font-semibold text-amber-900">{product.subcategory || product.category}</span>
+              <span className="text-stone-400">/</span>
+              <span className="truncate text-stone-500 font-normal">{product.fabric}</span>
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleWishlist(product.id);
+              }}
+              aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+              className="text-stone-400 hover:text-rose-600 transition-colors p-1 cursor-pointer shrink-0"
+            >
+              <Heart className={`w-3.5 h-3.5 ${wishlisted ? 'fill-rose-600 text-rose-600' : ''}`} />
+            </button>
+          </div>
+
+          {/* Product Title */}
+          <h3 className="text-sm font-semibold text-stone-900 line-clamp-1 group-hover:text-amber-800 transition-colors">
+            {product.title}
+          </h3>
+
+          <p className="text-xs text-stone-500 line-clamp-1 mt-0.5">
+            {product.subtitle}
+          </p>
+        </div>
+
+        {/* Pricing & Rating Row */}
+        <div className="mt-2.5 pt-2 border-t border-stone-100 flex items-center justify-between">
+          <div className="flex items-baseline gap-2">
+            <span className="text-base font-bold text-stone-900 tabular-nums">
+              ₹{price.toLocaleString('en-IN')}
+            </span>
+            {originalPrice > price && (
+              <span className="text-xs text-stone-400 line-through tabular-nums">
+                ₹{originalPrice.toLocaleString('en-IN')}
+              </span>
+            )}
+            {discountPercent > 0 && (
+              <span className="text-[11px] font-medium text-emerald-700">
+                {discountPercent}% off
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1 text-xs text-stone-600">
+            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
+            <span className="font-medium tabular-nums">{product.rating || 4.8}</span>
+            <span className="text-[11px] text-stone-400">({product.reviewCount || 10})</span>
+          </div>
+        </div>
+
+        {/* Direct Action Buttons */}
+        <div className="mt-3 pt-2.5 border-t border-stone-100 flex items-center gap-2">
+          {isOutOfStock ? (
+            <button
+              disabled
+              className="w-full py-2 px-3 bg-stone-100 text-stone-500 text-xs font-bold rounded cursor-not-allowed border border-stone-200 flex items-center justify-center gap-1.5"
+            >
+              <span>Out of Stock (Kovundampalayam)</span>
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={handleQuickAdd}
+                className="flex-1 py-2 px-2 bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold rounded flex items-center justify-center gap-1 transition-colors cursor-pointer"
+              >
+                <ShoppingBag className="w-3.5 h-3.5" />
+                <span>Bag</span>
+              </button>
+              <button
+                onClick={handleBuyNow}
+                className="flex-2 py-2 px-3 bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold rounded shadow-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <CreditCard className="w-3.5 h-3.5" />
+                <span>Buy Now</span>
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </article>
+  );
+};
