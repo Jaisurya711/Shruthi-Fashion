@@ -1,12 +1,8 @@
 {
-  "updatedAt": 1792588604359,
+  "updatedAt": 1792588621472,
   "stockMap": {
     "sf-custom-1792588596848-yppe": {
       "stockCount": 4,
-      "inStock": true
-    },
-    "sf-shawl-grand-12": {
-      "stockCount": 12,
       "inStock": true
     }
   }
