@@ -419,7 +419,7 @@ export const ProductDetailModal: React.FC = () => {
                 {/* Pricing Box */}
                 <div className="p-3.5 bg-white border border-stone-200 rounded-xl shadow-2xs">
                   <div className="flex items-baseline gap-3">
-                    <span className="text-2xl sm:text-3xl font-serif font-bold text-stone-900 tabular-nums">
+                    <span className="text-2xl sm:text-3xl font-sans font-bold text-stone-900 tabular-nums">
                       ₹{activeProduct.price.toLocaleString('en-IN')}
                     </span>
                     {activeProduct.originalPrice > activeProduct.price && (
@@ -434,7 +434,7 @@ export const ProductDetailModal: React.FC = () => {
                     )}
                   </div>
                   <p className="text-[11px] text-stone-500 mt-1">
-                    Inclusive of all taxes · Doorstep courier delivery across India
+                    Inclusive of all taxes · Doorstep courier across all over India
                   </p>
 
                   {/* Live Stock Availability Badge */}
@@ -714,7 +714,7 @@ export const ProductDetailModal: React.FC = () => {
         >
           <div className="flex flex-col">
             <span className="text-[11px] text-stone-500 leading-tight">Total</span>
-            <span className="text-base font-serif font-bold text-stone-900 tabular-nums">
+            <span className="text-base font-sans font-bold text-stone-900 tabular-nums">
               ₹{(price * quantity).toLocaleString('en-IN')}
             </span>
             <span className="text-[10px] text-amber-900 font-semibold truncate max-w-[100px]">
