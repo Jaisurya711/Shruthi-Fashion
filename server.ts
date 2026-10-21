@@ -263,6 +263,7 @@ app.post('/api/verify-payment', (req, res) => {
 const DATA_DIR = path.join(__dirname, 'data');
 const CATALOG_FILE = path.join(DATA_DIR, 'store_catalog.json');
 const HERO_FILE = path.join(DATA_DIR, 'hero_config.json');
+const ORDERS_FILE = path.join(DATA_DIR, 'store_orders.json');
 
 // Ensure data directory exists
 if (!fs.existsSync(DATA_DIR)) {
@@ -276,6 +277,7 @@ if (!fs.existsSync(DATA_DIR)) {
 // In-memory cache loaded from disk on boot
 let cachedProducts: any[] | null = null;
 let cachedHeroConfig: any = null;
+let cachedOrders: any[] | null = null;
 let catalogLastUpdated: number = Date.now();
 
 try {
@@ -523,6 +525,100 @@ app.post('/api/hero', (req, res) => {
     return res.status(400).json({ success: false, error: 'Valid heroConfig with imageUrl is required.' });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err?.message || 'Failed to update hero config' });
+  }
+});
+
+// ==================== Dedicated Real-Time Store Orders API ====================
+app.get('/api/orders', (req, res) => {
+  if (!cachedOrders && fs.existsSync(ORDERS_FILE)) {
+    try {
+      cachedOrders = JSON.parse(fs.readFileSync(ORDERS_FILE, 'utf-8'));
+    } catch {}
+  }
+  return res.status(200).json({
+    success: true,
+    orders: cachedOrders || []
+  });
+});
+
+app.post('/api/orders', (req, res) => {
+  try {
+    const { order, orders } = req.body || {};
+    if (!cachedOrders && fs.existsSync(ORDERS_FILE)) {
+      try {
+        cachedOrders = JSON.parse(fs.readFileSync(ORDERS_FILE, 'utf-8'));
+      } catch {}
+    }
+    let list = Array.isArray(cachedOrders) ? [...cachedOrders] : [];
+    if (Array.isArray(orders)) {
+      list = orders;
+    } else if (order && (order.id || order.orderNumber)) {
+      const idx = list.findIndex((o: any) => o.id === order.id || o.orderNumber === order.orderNumber);
+      if (idx !== -1) {
+        list[idx] = order;
+      } else {
+        list = [order, ...list];
+      }
+    } else {
+      return res.status(400).json({ success: false, error: 'Valid order or orders required' });
+    }
+
+    cachedOrders = list;
+    try {
+      fs.writeFileSync(ORDERS_FILE, JSON.stringify(list, null, 2), 'utf-8');
+    } catch (fsErr) {
+      console.warn('[Orders Persistence] Failed writing orders to disk:', fsErr);
+    }
+
+    commitToGitHubServer('data/store_orders.json', list, `Auto-sync: Orders database updated (${list.length} orders)`).catch(() => {});
+
+    return res.status(200).json({
+      success: true,
+      message: 'Order saved to server database and committed to GitHub',
+      ordersCount: list.length
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message || 'Failed saving order' });
+  }
+});
+
+app.put('/api/orders', (req, res) => {
+  try {
+    const { orderId, deliveryStatus, courierPartner, trackingNumber } = req.body || {};
+    if (!orderId) {
+      return res.status(400).json({ success: false, error: 'orderId is required' });
+    }
+    if (!cachedOrders && fs.existsSync(ORDERS_FILE)) {
+      try {
+        cachedOrders = JSON.parse(fs.readFileSync(ORDERS_FILE, 'utf-8'));
+      } catch {}
+    }
+    let list = Array.isArray(cachedOrders) ? [...cachedOrders] : [];
+    let updated = false;
+    list = list.map((o: any) => {
+      if (o.id === orderId || o.orderNumber === orderId) {
+        updated = true;
+        return {
+          ...o,
+          ...(deliveryStatus ? { deliveryStatus } : {}),
+          ...(courierPartner !== undefined ? { courierPartner } : {}),
+          ...(trackingNumber !== undefined ? { trackingNumber } : {})
+        };
+      }
+      return o;
+    });
+
+    if (updated) {
+      cachedOrders = list;
+      try {
+        fs.writeFileSync(ORDERS_FILE, JSON.stringify(list, null, 2), 'utf-8');
+      } catch {}
+      commitToGitHubServer('data/store_orders.json', list, `Auto-sync: Order ${orderId} status updated to ${deliveryStatus}`).catch(() => {});
+      return res.status(200).json({ success: true, message: 'Order status updated' });
+    }
+    return res.status(404).json({ success: false, error: 'Order not found' });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message || 'Failed updating order' });
   }
 });
 

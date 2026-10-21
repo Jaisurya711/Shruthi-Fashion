@@ -1,0 +1,93 @@
+[
+  {
+    "id": "ord-demo-1",
+    "orderNumber": "SF-2026-8419",
+    "date": "2026-10-16",
+    "items": [
+      {
+        "id": "cart-demo-1",
+        "product": {
+          "id": "sf-saree-1",
+          "title": "Coimbatore Soft Cotton Saree - Maroon & Zari Border",
+          "category": "Daily Wear",
+          "fabric": "Pure Cotton",
+          "price": 1499,
+          "images": [
+            "/images/product_coimbatore_cotton_saree_1791446904439.jpg"
+          ]
+        },
+        "selectedSize": "Free Size",
+        "selectedColor": "Deep Maroon",
+        "quantity": 1
+      }
+    ],
+    "subtotal": 1499,
+    "discount": 0,
+    "shippingFee": 80,
+    "total": 1579,
+    "address": {
+      "id": "addr-demo-1",
+      "fullName": "K. Revathi",
+      "phone": "9842155678",
+      "street": "Door No. 24, Thadagam Main Road",
+      "area": "Near DB Road Corner, RS Puram",
+      "city": "Coimbatore",
+      "pincode": "641002",
+      "state": "Tamil Nadu"
+    },
+    "paymentMethod": "Razorpay",
+    "paymentDetails": {
+      "razorpayPaymentId": "pay_rzp_cbe_8419"
+    },
+    "deliveryStatus": "Processing",
+    "courierPartner": "ST Courier",
+    "trackingNumber": "STC-CBE-641002-8419",
+    "estimatedDelivery": "2 Business Days"
+  },
+  {
+    "id": "ord-demo-2",
+    "orderNumber": "SF-2026-6204",
+    "date": "2026-10-15",
+    "items": [
+      {
+        "id": "cart-demo-2",
+        "product": {
+          "id": "sf-tussar-2",
+          "title": "Tussar Silk Festive Kurti with Zari Neck",
+          "category": "Kurtis",
+          "fabric": "Tussar Silk",
+          "price": 899,
+          "images": [
+            "/images/product_tussar_silk_kurti_1791446947466.jpg"
+          ]
+        },
+        "selectedSize": "L",
+        "selectedColor": "Emerald Green",
+        "quantity": 2
+      }
+    ],
+    "subtotal": 1798,
+    "discount": 0,
+    "shippingFee": 80,
+    "total": 1878,
+    "address": {
+      "id": "addr-demo-2",
+      "fullName": "Deepa Sundararajan",
+      "phone": "9443210987",
+      "street": "Flat 3B, Green Meadows, Trichy Road",
+      "area": "Near Singanallur Signal",
+      "city": "Coimbatore",
+      "pincode": "641005",
+      "state": "Tamil Nadu"
+    },
+    "paymentMethod": "UPI",
+    "paymentDetails": {
+      "upiId": "deepa@okaxis",
+      "utrNumber": "UPI429018449102"
+    },
+    "deliveryStatus": "Dispatched from Coimbatore",
+    "courierPartner": "Professional Couriers",
+    "trackingNumber": "TPC-CBE-99238411",
+    "estimatedDelivery": "3 Business Days"
+  }
+]

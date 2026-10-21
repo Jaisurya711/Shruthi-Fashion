@@ -21,7 +21,10 @@ import {
   syncHeroConfigToCloud,
   syncStockToCloud,
   fetchLatestStockFromCloud,
-  getSyncChannel
+  getSyncChannel,
+  fetchOrdersFromCloud,
+  syncOrderToCloud,
+  syncAllOrdersToCloud
 } from '../services/catalogSyncService';
 
 interface StoreContextType {
@@ -96,6 +99,8 @@ interface StoreContextType {
   resetProductsToDefault: () => void;
   syncCatalog: () => Promise<any>;
   setProductsList: (products: Product[]) => void;
+  addManualOrder: (order: UserOrder) => Promise<boolean>;
+  refreshOrders: () => Promise<void>;
 }
 
 const ASSET_REMAP: Record<string, string> = {
@@ -214,7 +219,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return INITIAL_PRODUCTS.map(normalizeProduct);
   });
 
-  // Automatically fetch cloud-synced catalog and mainframe hero banner on load
+  // Automatically fetch cloud-synced catalog, hero banner, and orders on load
   useEffect(() => {
     fetchLatestCatalogFromCloud().then(({ products: cloudProducts, heroConfig: cloudHero }) => {
       if (Array.isArray(cloudProducts) && cloudProducts.length > 0) {
@@ -222,6 +227,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
       if (cloudHero && cloudHero.imageUrl) {
         setHeroConfig(cloudHero);
+      }
+    });
+
+    fetchOrdersFromCloud().then(cloudOrders => {
+      if (Array.isArray(cloudOrders) && cloudOrders.length > 0) {
+        setAllOrders(cloudOrders);
       }
     });
   }, []);
@@ -380,8 +391,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     courierPartner?: string,
     trackingNumber?: string
   ) => {
-    setAllOrders(prev =>
-      prev.map(ord => {
+    setAllOrders(prev => {
+      const next = prev.map(ord => {
         if (ord.id === orderId || ord.orderNumber === orderId) {
           return {
             ...ord,
@@ -391,12 +402,33 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           };
         }
         return ord;
-      })
-    );
+      });
+      syncAllOrdersToCloud(next);
+      return next;
+    });
   };
 
   const deleteOrder = (orderId: string) => {
-    setAllOrders(prev => prev.filter(ord => ord.id !== orderId && ord.orderNumber !== orderId));
+    setAllOrders(prev => {
+      const next = prev.filter(ord => ord.id !== orderId && ord.orderNumber !== orderId);
+      syncAllOrdersToCloud(next);
+      return next;
+    });
+  };
+
+  const addManualOrder = async (order: UserOrder): Promise<boolean> => {
+    setAllOrders(prev => {
+      const exists = prev.some(o => o.id === order.id || o.orderNumber === order.orderNumber);
+      return exists ? prev.map(o => (o.id === order.id || o.orderNumber === order.orderNumber ? order : o)) : [order, ...prev];
+    });
+    return await syncOrderToCloud(order);
+  };
+
+  const refreshOrders = async () => {
+    const cloudOrders = await fetchOrdersFromCloud();
+    if (Array.isArray(cloudOrders) && cloudOrders.length > 0) {
+      setAllOrders(cloudOrders);
+    }
   };
   const [pendingCheckoutAfterAuth, setPendingCheckoutAfterAuth] = useState(false);
   const [storeBank, setStoreBank] = useState<StoreBankDetails>(() => getStoreBankDetails());
@@ -597,9 +629,27 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     };
 
+    // Orders sync check
+    const checkOrdersUpdates = async () => {
+      try {
+        const cloudOrders = await fetchOrdersFromCloud();
+        if (!isMounted || !cloudOrders) return;
+        setAllOrders(prev => {
+          if (cloudOrders.length !== prev.length) {
+            return cloudOrders;
+          }
+          const prevIds = new Set(prev.map(o => o.id || o.orderNumber));
+          const hasNew = cloudOrders.some(o => !prevIds.has(o.id || o.orderNumber));
+          if (hasNew) return cloudOrders;
+          return prev;
+        });
+      } catch {}
+    };
+
     // 1. Initial check
     checkCloudUpdates();
     checkStockUpdates();
+    checkOrdersUpdates();
 
     // 2. Cross-tab instant message listener (0ms reflection between tabs/windows)
     const channel = getSyncChannel();
@@ -616,6 +666,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           );
         } else if (data?.type === 'CATALOG_CHANGED') {
           checkCloudUpdates();
+        } else if (data?.type === 'NEW_ORDER' && data.order) {
+          setAllOrders(prev => {
+            const exists = prev.some(o => o.id === data.order.id || o.orderNumber === data.order.orderNumber);
+            return exists ? prev : [data.order, ...prev];
+          });
+        } else if (data?.type === 'ORDERS_UPDATED') {
+          checkOrdersUpdates();
         }
       };
     }
@@ -625,15 +682,17 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (document.visibilityState === 'visible') {
         checkStockUpdates();
         checkCloudUpdates();
+        checkOrdersUpdates();
       }
     };
 
     window.addEventListener('visibilitychange', handleVisibility);
     window.addEventListener('focus', handleVisibility);
 
-    // 4. Periodic background poll every 2.5 seconds for instant multi-device stock reflection
+    // 4. Periodic background poll for instant multi-device stock & orders reflection
     const stockIntervalId = setInterval(checkStockUpdates, 2500);
     const catalogIntervalId = setInterval(checkCloudUpdates, 5000);
+    const ordersIntervalId = setInterval(checkOrdersUpdates, 3500);
 
     return () => {
       isMounted = false;
@@ -641,6 +700,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       window.removeEventListener('focus', handleVisibility);
       clearInterval(stockIntervalId);
       clearInterval(catalogIntervalId);
+      clearInterval(ordersIntervalId);
     };
   }, []);
 
@@ -962,6 +1022,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // Send order notification email to shruthifashion01@gmail.com
     sendOrderNotificationEmail(newOrder);
 
+    // Automatically sync order to Cloud database and GitHub repository so Owner Portal reflects it immediately
+    syncOrderToCloud(newOrder);
+
     return newOrder;
   };
 
@@ -1107,6 +1170,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         resetProductsToDefault,
         syncCatalog,
         setProductsList,
+        addManualOrder,
+        refreshOrders,
       }}
     >
       {children}

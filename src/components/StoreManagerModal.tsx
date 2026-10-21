@@ -63,7 +63,9 @@ export const StoreManagerModal: React.FC = () => {
     deleteOrder,
     syncCatalog,
     setProductsList,
-    updateProductStock
+    updateProductStock,
+    addManualOrder,
+    refreshOrders
   } = useStore();
 
   const [activeTab, setActiveTab] = useState<'orders' | 'hero' | 'categories' | 'add' | 'list'>('orders');
@@ -83,6 +85,179 @@ export const StoreManagerModal: React.FC = () => {
   const [editCourierPartner, setEditCourierPartner] = useState('');
   const [editTrackingNo, setEditTrackingNo] = useState('');
   const [editStatus, setEditStatus] = useState<UserOrder['deliveryStatus']>('Order Placed');
+
+  // FormSubmit Email Order Import states
+  const [showEmailOrderImport, setShowEmailOrderImport] = useState(false);
+  const [isRefreshingOrders, setIsRefreshingOrders] = useState(false);
+  const [emailRawText, setEmailRawText] = useState('');
+  const [manualOrderForm, setManualOrderForm] = useState({
+    orderNumber: '',
+    customerName: '',
+    phone: '',
+    street: '',
+    area: '',
+    city: 'Coimbatore',
+    pincode: '641030',
+    state: 'Tamil Nadu',
+    itemsText: '',
+    totalAmount: '',
+    paymentMethod: 'UPI' as UserOrder['paymentMethod']
+  });
+
+  const handleRefreshOrders = async () => {
+    setIsRefreshingOrders(true);
+    try {
+      await refreshOrders();
+      showToast('✅ Orders refreshed from cloud database!');
+    } catch {
+      showToast('⚠️ Could not refresh orders from cloud.');
+    } finally {
+      setIsRefreshingOrders(false);
+    }
+  };
+
+  const handleAutoFillFromEmail = (raw: string) => {
+    setEmailRawText(raw);
+    if (!raw.trim()) return;
+
+    // Extract Order Number
+    const orderMatch = raw.match(/order_number[:\s]+([^\n\r]+)/i) || raw.match(/#?(SF-202[0-9]-[0-9]+)/i);
+    const orderNum = orderMatch ? orderMatch[1].trim() : `SF-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    // Extract Name
+    const nameMatch = raw.match(/customer_name[:\s]+([^\n\r]+)/i) || raw.match(/name[:\s]+([^\n\r]+)/i);
+    const custName = nameMatch ? nameMatch[1].trim() : '';
+
+    // Extract Phone
+    const phoneMatch = raw.match(/customer_phone[:\s]+([^\n\r]+)/i) || raw.match(/phone[:\s]+([^\n\r]+)/i) || raw.match(/(\+?91[\s-]?)?[6789]\d{9}/);
+    const phone = phoneMatch ? phoneMatch[0].trim().replace(/\D/g, '').slice(-10) : '';
+
+    // Extract Total
+    const totalMatch = raw.match(/order_total[:\s]+₹?([0-9,]+)/i) || raw.match(/total[:\s]+₹?([0-9,]+)/i);
+    const total = totalMatch ? totalMatch[1].replace(/,/g, '').trim() : '';
+
+    // Extract Address
+    const addrMatch = raw.match(/delivery_address[:\s]+([^\n\r]+)/i) || raw.match(/address[:\s]+([^\n\r]+)/i);
+    let street = '';
+    let area = '';
+    let city = 'Coimbatore';
+    let pincode = '641030';
+    if (addrMatch) {
+      const parts = addrMatch[1].split(',').map(s => s.trim());
+      street = parts[0] || '';
+      area = parts[1] || '';
+      if (parts[2]) {
+        const cityPin = parts[2].split('-');
+        city = cityPin[0]?.trim() || 'Coimbatore';
+        pincode = (cityPin[1] || '').trim().replace(/\D/g, '') || '641030';
+      }
+    }
+
+    // Extract Items
+    const itemsMatch = raw.match(/order_items[:\s]+([\s\S]+?)(?=dispatch_method|tracking_id|$)/i);
+    const items = itemsMatch ? itemsMatch[1].trim() : '';
+
+    // Extract Payment Method
+    const payMatch = raw.match(/payment_method[:\s]+([^\n\r]+)/i);
+    const payMethod = payMatch && /cod/i.test(payMatch[1]) ? 'COD' : (/card/i.test(payMatch?.[1] || '') ? 'Card' : 'UPI');
+
+    setManualOrderForm(prev => ({
+      ...prev,
+      orderNumber: orderNum,
+      customerName: custName || prev.customerName,
+      phone: phone || prev.phone,
+      street: street || prev.street,
+      area: area || prev.area,
+      city: city || prev.city,
+      pincode: pincode || prev.pincode,
+      totalAmount: total || prev.totalAmount,
+      itemsText: items || prev.itemsText,
+      paymentMethod: payMethod as any
+    }));
+  };
+
+  const handleSaveImportedOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!manualOrderForm.customerName.trim() || !manualOrderForm.phone.trim()) {
+      showToast('❌ Customer Name and Phone are required.');
+      return;
+    }
+
+    const orderNum = manualOrderForm.orderNumber.trim() || `SF-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+    const total = Number(manualOrderForm.totalAmount) || 0;
+    const subtotal = Math.max(0, total - 80);
+
+    const importedOrder: UserOrder = {
+      id: `ord-imported-${Date.now()}`,
+      orderNumber: orderNum,
+      date: new Date().toISOString().split('T')[0],
+      items: [
+        {
+          id: `item-${Date.now()}`,
+          product: {
+            id: `sf-imported-${Date.now()}`,
+            title: manualOrderForm.itemsText || 'Ordered Dress / Fabric from Shruthi Fashion',
+            subtitle: 'Customer Online Order',
+            price: subtotal || total,
+            originalPrice: subtotal || total,
+            category: 'Customer Order',
+            subcategory: 'Online Order',
+            fabric: 'Cotton / Rayon',
+            occasion: 'All Occasions',
+            colors: [{ name: 'Selected Shade', hex: '#842D2D' }],
+            sizes: ['Standard'],
+            inStock: true,
+            stockCount: 1,
+            images: [products[0]?.images[0] || '/images/hero_coimbatore_boutique_1791446890433.jpg'],
+            description: manualOrderForm.itemsText || 'Order details from FormSubmit',
+            fabricDetails: 'Hand-inspected fabric',
+            careInstructions: 'Dry in shade',
+            reviews: []
+          },
+          selectedSize: 'Standard',
+          selectedColor: 'Standard',
+          quantity: 1
+        }
+      ],
+      subtotal,
+      discount: 0,
+      shippingFee: 80,
+      total: total || (subtotal + 80),
+      address: {
+        id: `addr-${Date.now()}`,
+        fullName: manualOrderForm.customerName.trim(),
+        phone: manualOrderForm.phone.trim(),
+        street: manualOrderForm.street.trim() || 'Doorstep Delivery Address',
+        area: manualOrderForm.area.trim() || 'Coimbatore',
+        city: manualOrderForm.city.trim() || 'Coimbatore',
+        pincode: manualOrderForm.pincode.trim() || '641030',
+        state: manualOrderForm.state.trim() || 'Tamil Nadu'
+      },
+      paymentMethod: manualOrderForm.paymentMethod,
+      deliveryStatus: 'Processing',
+      courierPartner: 'ST Courier / Speed Courier',
+      trackingNumber: `SF-TRK-${manualOrderForm.pincode.trim() || '641030'}-${Math.floor(100 + Math.random() * 900)}`,
+      estimatedDelivery: '2 - 3 Business Days'
+    };
+
+    await addManualOrder(importedOrder);
+    showToast(`✅ Order #${importedOrder.orderNumber} for ${importedOrder.address.fullName} added to Orders & Dispatch and synced to Cloud!`);
+    setShowEmailOrderImport(false);
+    setManualOrderForm({
+      orderNumber: '',
+      customerName: '',
+      phone: '',
+      street: '',
+      area: '',
+      city: 'Coimbatore',
+      pincode: '641030',
+      state: 'Tamil Nadu',
+      itemsText: '',
+      totalAmount: '',
+      paymentMethod: 'UPI'
+    });
+    setEmailRawText('');
+  };
 
   // Main Frame Banner Form states
   const [heroForm, setHeroForm] = useState({
@@ -1051,9 +1226,195 @@ export const StoreManagerModal: React.FC = () => {
                       className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-md font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs shrink-0"
                     >
                       <MessageCircle className="w-3.5 h-3.5" />
-                      <span>+ Print WhatsApp Label</span>
+                      <span>+ WhatsApp Label</span>
+                    </button>
+
+                    {/* Sync & Refresh Cloud Orders */}
+                    <button
+                      type="button"
+                      onClick={handleRefreshOrders}
+                      disabled={isRefreshingOrders}
+                      className="px-3 py-1.5 bg-white hover:bg-stone-100 text-stone-800 rounded-md font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-stone-300 shadow-2xs shrink-0"
+                      title="Sync and fetch latest orders from customer checkouts"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 text-stone-600 ${isRefreshingOrders ? 'animate-spin' : ''}`} />
+                      <span>{isRefreshingOrders ? 'Syncing...' : 'Refresh Orders'}</span>
+                    </button>
+
+                    {/* Import Order from FormSubmit Email */}
+                    <button
+                      type="button"
+                      onClick={() => setShowEmailOrderImport(true)}
+                      className="px-3 py-1.5 bg-amber-800 hover:bg-amber-900 text-white rounded-md font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs shrink-0"
+                      title="Import order details received from FormSubmit notification email"
+                    >
+                      <Upload className="w-3.5 h-3.5 text-amber-200" />
+                      <span>Import Email Order</span>
                     </button>
                   </div>
+
+                  {/* FormSubmit Email Order Import Modal */}
+                  {showEmailOrderImport && (
+                    <div className="mb-6 p-4 sm:p-5 bg-amber-50/70 border border-amber-200 rounded-xl shadow-xs">
+                      <div className="flex items-start justify-between gap-3 pb-3 border-b border-amber-200/80">
+                        <div>
+                          <h3 className="font-bold text-stone-900 text-sm flex items-center gap-2">
+                            <span>📥 Import Customer Order from FormSubmit Email</span>
+                            <span className="text-[10px] bg-amber-200 text-amber-900 font-semibold px-2 py-0.5 rounded">
+                              shruthifashion01@gmail.com
+                            </span>
+                          </h3>
+                          <p className="text-xs text-stone-600 mt-1">
+                            Paste the email content you received from FormSubmit below, or fill the fields directly. It will be immediately added to your Orders & Dispatch list and synced to the database.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowEmailOrderImport(false)}
+                          className="p-1 rounded-md text-stone-500 hover:text-stone-800 hover:bg-amber-100 cursor-pointer"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      <form onSubmit={handleSaveImportedOrder} className="mt-4 space-y-4">
+                        {/* Paste area for Auto-fill */}
+                        <div>
+                          <label className="block text-xs font-bold text-stone-800 mb-1">
+                            📋 Quick Paste Email Text (Auto-Fills Form below):
+                          </label>
+                          <textarea
+                            rows={3}
+                            value={emailRawText}
+                            onChange={(e) => handleAutoFillFromEmail(e.target.value)}
+                            placeholder="Paste your FormSubmit email text here (e.g. order_number: SF-2026-..., customer_name: Priya, customer_phone: 987..., delivery_address: ...)"
+                            className="w-full text-xs p-2.5 bg-white border border-stone-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-amber-700/50 font-mono"
+                          />
+                        </div>
+
+                        {/* Order Details Grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                          <div>
+                            <label className="block text-[11px] font-bold text-stone-700 mb-1">Order Number *</label>
+                            <input
+                              type="text"
+                              value={manualOrderForm.orderNumber}
+                              onChange={(e) => setManualOrderForm({ ...manualOrderForm, orderNumber: e.target.value })}
+                              placeholder="e.g. SF-2026-4891"
+                              className="w-full text-xs p-2 bg-white border border-stone-300 rounded-md focus:ring-2 focus:ring-amber-700/50"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-bold text-stone-700 mb-1">Customer Name *</label>
+                            <input
+                              type="text"
+                              required
+                              value={manualOrderForm.customerName}
+                              onChange={(e) => setManualOrderForm({ ...manualOrderForm, customerName: e.target.value })}
+                              placeholder="e.g. Ananya / Priya"
+                              className="w-full text-xs p-2 bg-white border border-stone-300 rounded-md focus:ring-2 focus:ring-amber-700/50"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-bold text-stone-700 mb-1">Mobile Phone *</label>
+                            <input
+                              type="text"
+                              required
+                              value={manualOrderForm.phone}
+                              onChange={(e) => setManualOrderForm({ ...manualOrderForm, phone: e.target.value })}
+                              placeholder="e.g. 9894088349"
+                              className="w-full text-xs p-2 bg-white border border-stone-300 rounded-md focus:ring-2 focus:ring-amber-700/50"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-bold text-stone-700 mb-1">Total Amount (₹) *</label>
+                            <input
+                              type="number"
+                              required
+                              value={manualOrderForm.totalAmount}
+                              onChange={(e) => setManualOrderForm({ ...manualOrderForm, totalAmount: e.target.value })}
+                              placeholder="e.g. 380"
+                              className="w-full text-xs p-2 bg-white border border-stone-300 rounded-md focus:ring-2 focus:ring-amber-700/50 font-bold"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-bold text-stone-700 mb-1">Payment Method</label>
+                            <select
+                              value={manualOrderForm.paymentMethod}
+                              onChange={(e) => setManualOrderForm({ ...manualOrderForm, paymentMethod: e.target.value as any })}
+                              className="w-full text-xs p-2 bg-white border border-stone-300 rounded-md focus:ring-2 focus:ring-amber-700/50"
+                            >
+                              <option value="UPI">UPI / GPay / PhonePe</option>
+                              <option value="Razorpay">Razorpay Online</option>
+                              <option value="COD">Cash on Delivery (COD)</option>
+                              <option value="BankTransfer">Bank Transfer</option>
+                              <option value="StorePickup">Store Pickup</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-bold text-stone-700 mb-1">Pincode *</label>
+                            <input
+                              type="text"
+                              required
+                              value={manualOrderForm.pincode}
+                              onChange={(e) => setManualOrderForm({ ...manualOrderForm, pincode: e.target.value })}
+                              placeholder="e.g. 641030"
+                              className="w-full text-xs p-2 bg-white border border-stone-300 rounded-md focus:ring-2 focus:ring-amber-700/50"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Full Delivery Address & Items */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[11px] font-bold text-stone-700 mb-1">Delivery Address (Door No, Street, City) *</label>
+                            <input
+                              type="text"
+                              required
+                              value={manualOrderForm.street}
+                              onChange={(e) => setManualOrderForm({ ...manualOrderForm, street: e.target.value })}
+                              placeholder="e.g. 14/2 Gandhi Street, Kovundampalayam, Coimbatore"
+                              className="w-full text-xs p-2 bg-white border border-stone-300 rounded-md focus:ring-2 focus:ring-amber-700/50"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-bold text-stone-700 mb-1">Items / Dress Description</label>
+                            <input
+                              type="text"
+                              value={manualOrderForm.itemsText}
+                              onChange={(e) => setManualOrderForm({ ...manualOrderForm, itemsText: e.target.value })}
+                              placeholder="e.g. Korean Crop Top (Blue, Size L)"
+                              className="w-full text-xs p-2 bg-white border border-stone-300 rounded-md focus:ring-2 focus:ring-amber-700/50"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Submit Action */}
+                        <div className="flex items-center justify-end gap-2.5 pt-2">
+                          <button
+                            type="button"
+                            onClick={() => setShowEmailOrderImport(false)}
+                            className="px-4 py-2 bg-stone-200 hover:bg-stone-300 text-stone-800 rounded-md text-xs font-semibold cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            className="px-4 py-2 bg-amber-800 hover:bg-amber-900 text-white rounded-md text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer"
+                          >
+                            <Save className="w-3.5 h-3.5" />
+                            <span>Save Order to Dispatch List</span>
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  )}
 
                   {/* Orders Listing */}
                   {allOrders.filter(order => {

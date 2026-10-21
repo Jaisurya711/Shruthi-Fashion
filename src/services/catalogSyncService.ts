@@ -1,4 +1,4 @@
-import { Product, HeroConfig } from '../types/store';
+import { Product, HeroConfig, UserOrder } from '../types/store';
 
 // Dedicated GitHub repo & cloud storage for Shruthi Fashion
 const GITHUB_REPO_OWNER = 'Jaisurya711';
@@ -16,6 +16,7 @@ const GITHUB_RAW_BASE = `https://raw.githubusercontent.com/${GITHUB_REPO_OWNER}/
 const LOCAL_STORAGE_KEY = 'shruthi_fashion_products';
 const HERO_STORAGE_KEY = 'shruthi_hero_config';
 const STOCK_STORAGE_KEY = 'shruthi_stock_map';
+const ORDERS_STORAGE_KEY = 'shruthi_fashion_all_orders';
 const SYNC_TIMESTAMP_KEY = 'shruthi_catalog_last_synced';
 
 export interface CatalogSyncResult {
@@ -496,3 +497,150 @@ export async function checkCloudStatus(): Promise<{
     lastUpdated: 0
   };
 }
+
+/**
+ * Load latest customer orders from server API or GitHub cloud
+ */
+export async function fetchOrdersFromCloud(): Promise<UserOrder[] | null> {
+  // 1. Try local Express / Serverless API (/api/orders)
+  try {
+    const res = await fetch('/api/orders', {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+      cache: 'no-store'
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data?.orders) && data.orders.length > 0) {
+        localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(data.orders));
+        return data.orders;
+      }
+    }
+  } catch {}
+
+  // 2. Fetch directly from GitHub repository data/store_orders.json
+  try {
+    const ghOrders = await fetchRawFromGitHub('data/store_orders.json');
+    if (Array.isArray(ghOrders) && ghOrders.length > 0) {
+      localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(ghOrders));
+      return ghOrders;
+    }
+  } catch {}
+
+  // 3. Fallback to localStorage
+  try {
+    const cached = localStorage.getItem(ORDERS_STORAGE_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch {}
+
+  return null;
+}
+
+/**
+ * Persist new customer order to local state, server API, and GitHub repository
+ */
+export async function syncOrderToCloud(newOrder: UserOrder): Promise<boolean> {
+  if (!newOrder || (!newOrder.id && !newOrder.orderNumber)) return false;
+
+  // 1. Instant cross-tab broadcast
+  if (syncChannel) {
+    try {
+      syncChannel.postMessage({
+        type: 'NEW_ORDER',
+        order: newOrder,
+        timestamp: Date.now()
+      });
+    } catch {}
+  }
+
+  // 2. Update local storage
+  try {
+    const cached = localStorage.getItem(ORDERS_STORAGE_KEY);
+    let currentList: UserOrder[] = [];
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed)) currentList = parsed;
+    }
+    const exists = currentList.some(o => o.id === newOrder.id || o.orderNumber === newOrder.orderNumber);
+    if (!exists) {
+      currentList = [newOrder, ...currentList];
+      localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(currentList));
+    }
+  } catch {}
+
+  // 3. Post to /api/orders
+  try {
+    await fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ order: newOrder })
+    });
+  } catch {}
+
+  // 4. Commit directly to GitHub data/store_orders.json
+  try {
+    let cloudList: UserOrder[] = [];
+    const existing = await fetchRawFromGitHub('data/store_orders.json');
+    if (Array.isArray(existing)) {
+      cloudList = existing;
+    }
+    const alreadyThere = cloudList.some(o => o.id === newOrder.id || o.orderNumber === newOrder.orderNumber);
+    if (!alreadyThere) {
+      cloudList = [newOrder, ...cloudList];
+      await commitJsonToGitHub(
+        'data/store_orders.json',
+        cloudList,
+        `Auto-sync: New customer order #${newOrder.orderNumber} (₹${newOrder.total})`
+      );
+    }
+  } catch (err) {
+    console.warn('[Order Sync] GitHub commit failed:', err);
+  }
+
+  return true;
+}
+
+/**
+ * Sync entire list of orders (e.g. after status update, dispatch, or deletion)
+ */
+export async function syncAllOrdersToCloud(orders: UserOrder[]): Promise<boolean> {
+  if (!Array.isArray(orders)) return false;
+
+  // 1. Instant cross-tab broadcast
+  if (syncChannel) {
+    try {
+      syncChannel.postMessage({
+        type: 'ORDERS_UPDATED',
+        ordersCount: orders.length,
+        timestamp: Date.now()
+      });
+    } catch {}
+  }
+
+  // 2. Update local storage
+  try {
+    localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders));
+  } catch {}
+
+  // 3. Post to /api/orders
+  try {
+    await fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orders })
+    });
+  } catch {}
+
+  // 4. Commit to GitHub
+  commitJsonToGitHub(
+    'data/store_orders.json',
+    orders,
+    `Auto-sync: Store orders updated (${orders.length} orders)`
+  ).catch(() => {});
+
+  return true;
+}
+
