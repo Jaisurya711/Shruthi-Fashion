@@ -53,7 +53,6 @@ export const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
 
   const displayImage = product.images?.[0] || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=600&q=80';
   const isOutOfStock = (product.stockCount !== undefined && product.stockCount <= 0) || product.inStock === false;
-  const isLowStock = !isOutOfStock && (product.stockCount !== undefined && product.stockCount > 0 && product.stockCount <= 4);
 
   return (
     <article
@@ -81,14 +80,6 @@ export const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
           </div>
         )}
 
-        {/* Low Stock Urgent Badge */}
-        {isLowStock && (
-          <div className="absolute top-2 left-2 z-20">
-            <span className="bg-amber-600/95 text-white font-bold text-[10px] px-2 py-0.5 rounded shadow-xs">
-              Only {product.stockCount} Left!
-            </span>
-          </div>
-        )}
 
         {/* Fallback container if image fails or loading */}
         {!imgLoaded && !imgError && (
