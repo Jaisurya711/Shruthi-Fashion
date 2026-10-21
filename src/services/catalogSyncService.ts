@@ -2,6 +2,7 @@ import { Product, HeroConfig } from '../types/store';
 
 // Dedicated GitHub repo & cloud storage for Shruthi Fashion
 const GITHUB_REPO_OWNER = 'Jaisurya711';
+const GITHUB_REPO_NAME = 'Shruthi-Fashion';
 function getGitHubToken(): string {
   if (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_GITHUB_TOKEN) {
     return (import.meta as any).env.VITE_GITHUB_TOKEN.trim();
