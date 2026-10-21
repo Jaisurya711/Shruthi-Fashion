@@ -1,18 +1,6 @@
 {
-  "updatedAt": 1792588494880,
+  "updatedAt": 1792588499631,
   "stockMap": {
-    "sf-western-05": {
-      "stockCount": 14,
-      "inStock": true
-    },
-    "sf-jeans-06": {
-      "stockCount": 20,
-      "inStock": true
-    },
-    "sf-leggings-07": {
-      "stockCount": 45,
-      "inStock": true
-    },
     "sf-anklefit-08": {
       "stockCount": 25,
       "inStock": true
