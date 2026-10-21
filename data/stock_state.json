@@ -1,10 +1,6 @@
 {
-  "updatedAt": 1792588490556,
+  "updatedAt": 1792588493507,
   "stockMap": {
-    "sf-feeding-04": {
-      "stockCount": 22,
-      "inStock": true
-    },
     "sf-western-05": {
       "stockCount": 14,
       "inStock": true
