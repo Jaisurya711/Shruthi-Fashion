@@ -1,36 +1,8 @@
 {
-  "updatedAt": 1792592072060,
+  "updatedAt": 1792592072041,
   "stockMap": {
     "sf-custom-1792591899998-xkeu": {
-      "stockCount": 12,
-      "inStock": true
-    },
-    "sf-custom-1792590101851-08sc": {
-      "stockCount": 4,
-      "inStock": true
-    },
-    "sf-custom-1792589591523-vz13": {
-      "stockCount": 4,
-      "inStock": true
-    },
-    "sf-custom-1792589332419-q72p": {
-      "stockCount": 4,
-      "inStock": true
-    },
-    "sf-custom-1792588971554-d453": {
-      "stockCount": 4,
-      "inStock": true
-    },
-    "sf-custom-1792588896223-6s6x": {
-      "stockCount": 1,
-      "inStock": true
-    },
-    "sf-custom-1792588771603-5jr4": {
-      "stockCount": 4,
-      "inStock": true
-    },
-    "sf-custom-1792588596848-yppe": {
-      "stockCount": 4,
+      "stockCount": 10,
       "inStock": true
     }
   }
