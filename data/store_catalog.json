@@ -1,5 +1,470 @@
 [
   {
+    "id": "sf-umbrella-03",
+    "title": "Flared Tiered Umbrella Kurti with Dori Tassels",
+    "subtitle": "Full 3.5-meter umbrella ghera flare with gold gotta lace detailing",
+    "price": 799,
+    "originalPrice": 1299,
+    "category": "Kurtis",
+    "subcategory": "Umbrella Kurti",
+    "fabric": "Soft Flowy Georgette & Crepe",
+    "occasion": "Festive & Family Functions",
+    "colors": [
+      {
+        "name": "Emerald Green",
+        "hex": "#047857"
+      },
+      {
+        "name": "Wine Plum",
+        "hex": "#701A75"
+      },
+      {
+        "name": "Royal Navy",
+        "hex": "#1E3A8A"
+      }
+    ],
+    "sizes": [
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "inStock": true,
+    "stockCount": 12,
+    "isBestSeller": false,
+    "isNew": true,
+    "expressCoimbatore": true,
+    "rating": 4.9,
+    "reviewCount": 41,
+    "images": [
+      "https://www.shruthifashion.com/assets/product_festive_anarkali_suit_1791446931244-DZz5l4bz.jpg",
+      "https://www.shruthifashion.com/assets/shruthi_feeding_kurti_1791448275230-3pp1m3EY.jpg",
+      "https://www.shruthifashion.com/assets/product_festive_anarkali_suit_1791446931244-DZz5l4bz.jpg"
+    ],
+    "description": "Turn heads with a grand twirl! Our bestselling umbrella kurti features a voluminous 3-tier circular flare with gold gota border, sweetheart neck, and adjustable side tie-up dori with handcrafted latkan tassels.",
+    "fabricDetails": "Flowing micro-georgette with full inner crepe lining up to hem.",
+    "careInstructions": "Gentle wash in cold water. Low heat iron.",
+    "specialFeatures": "Wide 3.5-meter circular umbrella flare with adjustable waist dori.",
+    "reviews": [
+      {
+        "id": "rev-sf-3",
+        "userName": "Sangeetha R.",
+        "rating": 5,
+        "date": "4 days ago",
+        "city": "Kovundampalayam, Coimbatore",
+        "comment": "The flare on this umbrella kurti is enormous! Wore it for a temple function and got so many inquiries.",
+        "verifiedBuyer": true
+      }
+    ]
+  },
+  {
+    "id": "sf-feeding-04",
+    "title": "Maternity Feeding Kurti with Dual Concealed Zippers",
+    "subtitle": "Ultra-soft cotton maternity kurti with 2 invisible vertical nursing zippers",
+    "price": 649,
+    "originalPrice": 999,
+    "category": "Kurtis",
+    "subcategory": "Feeding Kurti",
+    "fabric": "Super-Soft Breathable Bio-Washed Cotton",
+    "occasion": "Maternity, Nursing & Daily Comfort",
+    "colors": [
+      {
+        "name": "Pastel Peach",
+        "hex": "#FDBA74"
+      },
+      {
+        "name": "Mint Sage",
+        "hex": "#86EFAC"
+      },
+      {
+        "name": "Sky Blue",
+        "hex": "#7DD3FC"
+      }
+    ],
+    "sizes": [
+      "M",
+      "L",
+      "XL",
+      "XXL",
+      "3XL"
+    ],
+    "inStock": true,
+    "stockCount": 22,
+    "isBestSeller": false,
+    "isNew": true,
+    "expressCoimbatore": true,
+    "rating": 5,
+    "reviewCount": 52,
+    "images": [
+      "https://www.shruthifashion.com/assets/shruthi_feeding_kurti_1791448275230-3pp1m3EY.jpg",
+      "https://www.shruthifashion.com/assets/product_tussar_silk_kurti_1791446947466-C_YN3ixL.jpg",
+      "https://www.shruthifashion.com/assets/shruthi_feeding_kurti_1791448275230-3pp1m3EY.jpg"
+    ],
+    "description": "Thoughtfully designed for new and expecting mothers in Coimbatore. Features two concealed smooth vertical zippers cleverly camouflaged under the front pleats. Allows discrete, easy feeding while looking completely like a stylish kurti.",
+    "fabricDetails": "100% Bio-washed baby-safe cotton, anti-allergic and irritation-free.",
+    "careInstructions": "Machine washable, gentle spin. Zippers are rust-proof and concealed.",
+    "specialFeatures": "Dual 11-inch invisible nursing zippers + adjustable back tie-up for pre/post-pregnancy fit.",
+    "reviews": [
+      {
+        "id": "rev-sf-4",
+        "userName": "Dr. Keerthana Mohan",
+        "rating": 5,
+        "date": "Yesterday",
+        "city": "Thudiyalur / Kovundampalayam, Coimbatore",
+        "comment": "Absolute lifesaver for nursing mothers! Nobody can even tell there are zippers. Softest cotton ever.",
+        "verifiedBuyer": true
+      }
+    ]
+  },
+  {
+    "id": "sf-western-05",
+    "title": "Floral Tiered Western A-Line Dress / Tunic",
+    "subtitle": "Chic modern western wear with smocked cuffs and waist belt",
+    "price": 749,
+    "originalPrice": 1199,
+    "category": "Western Wear",
+    "subcategory": "Western Wear",
+    "fabric": "Korean Chiffon / Rayon Blend",
+    "occasion": "Brunch, Travel & Weekend Outings",
+    "colors": [
+      {
+        "name": "Dusty Rose",
+        "hex": "#E11D48"
+      },
+      {
+        "name": "Lavender Floral",
+        "hex": "#A855F7"
+      },
+      {
+        "name": "Classic Black",
+        "hex": "#18181B"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "inStock": true,
+    "stockCount": 14,
+    "isBestSeller": false,
+    "isNew": true,
+    "expressCoimbatore": true,
+    "rating": 4.8,
+    "reviewCount": 19,
+    "images": [
+      "https://www.shruthifashion.com/assets/shruthi_western_wear_1791448297281-BGTW-c_G.jpg",
+      "https://www.shruthifashion.com/assets/product_festive_anarkali_suit_1791446931244-DZz5l4bz.jpg",
+      "https://www.shruthifashion.com/assets/shruthi_western_wear_1791448297281-BGTW-c_G.jpg"
+    ],
+    "description": "Elevate your wardrobe with modern silhouettes. This floral western dress comes with soft puff sleeves, elasticated smocked detailing, and an attached matching fabric belt for an hourglass outline.",
+    "fabricDetails": "Breathable imported chiffon with skin-friendly cotton lining.",
+    "careInstructions": "Hand wash or gentle cycle. Do not wring.",
+    "specialFeatures": "Smocked waist elasticity, modest midi length suitable for all occasions.",
+    "reviews": [
+      {
+        "id": "rev-sf-5",
+        "userName": "Ananya S.",
+        "rating": 5,
+        "date": "5 days ago",
+        "city": "RS Puram, Coimbatore",
+        "comment": "Very trendy! The western collection at Shruthi Fashion is unexpectedly great and pocket-friendly.",
+        "verifiedBuyer": true
+      }
+    ]
+  },
+  {
+    "id": "sf-jeans-06",
+    "title": "High-Waist 4-Way Stretch Denim Jeans",
+    "subtitle": "Comfort-fit ankle length stretch jeans for kurtis & western tops",
+    "price": 899,
+    "originalPrice": 1499,
+    "category": "Bottom Wear",
+    "subcategory": "Jeans",
+    "fabric": "Premium Stretch Cotton Denim (98% Cotton, 2% Spandex)",
+    "occasion": "Everyday Wear",
+    "colors": [
+      {
+        "name": "Deep Indigo Blue",
+        "hex": "#1E3A8A"
+      },
+      {
+        "name": "Washed Ice Blue",
+        "hex": "#60A5FA"
+      },
+      {
+        "name": "Midnight Black",
+        "hex": "#171717"
+      }
+    ],
+    "sizes": [
+      "28",
+      "30",
+      "32",
+      "34",
+      "36",
+      "38"
+    ],
+    "inStock": true,
+    "stockCount": 20,
+    "isBestSeller": false,
+    "isNew": false,
+    "expressCoimbatore": true,
+    "rating": 4.9,
+    "reviewCount": 38,
+    "images": [
+      "https://www.shruthifashion.com/assets/shruthi_bottom_wear_1791448315562-QqtGSsIQ.jpg",
+      "https://www.shruthifashion.com/assets/shruthi_western_wear_1791448297281-BGTW-c_G.jpg",
+      "https://www.shruthifashion.com/assets/shruthi_bottom_wear_1791448315562-QqtGSsIQ.jpg"
+    ],
+    "description": "The holy grail of stretch jeans! Designed with a high-rise comfort waistband that doesn’t gap at the back. Pairs perfectly with short kurtis, tunics, and t-shirts for college and work.",
+    "fabricDetails": "11.5 Oz Stretch Denim with shape-recovery memory fabric.",
+    "careInstructions": "Wash inside out with similar dark shades. Avoid bleach.",
+    "specialFeatures": "High-rise tummy smoothing waistband with 5 functional deep pockets.",
+    "reviews": [
+      {
+        "id": "rev-sf-6",
+        "userName": "Lavanya Krishnan",
+        "rating": 5,
+        "date": "1 week ago",
+        "city": "Kovundampalayam, Coimbatore",
+        "comment": "So stretchy and easy to bend or sit all day at work. Perfect fit around the ankle.",
+        "verifiedBuyer": true
+      }
+    ]
+  },
+  {
+    "id": "sf-leggings-07",
+    "title": "4-Way Cotton Lycra Churidar / Ankle Leggings",
+    "subtitle": "Ultra-stretch super combed cotton leggings with anti-pilling bio-wash",
+    "price": 299,
+    "originalPrice": 499,
+    "category": "Bottom Wear",
+    "subcategory": "Leggings",
+    "fabric": "95% Combed Cotton, 5% Spandex (4-Way Lycra)",
+    "occasion": "Daily Ethnic Matching",
+    "colors": [
+      {
+        "name": "Jet Black",
+        "hex": "#0A0A0A"
+      },
+      {
+        "name": "Pure White",
+        "hex": "#F5F5F5"
+      },
+      {
+        "name": "Royal Maroon",
+        "hex": "#881337"
+      },
+      {
+        "name": "Mustard Gold",
+        "hex": "#CA8A04"
+      }
+    ],
+    "sizes": [
+      "Free Size (Fits 28-36)",
+      "Plus Size (Fits 36-44)"
+    ],
+    "inStock": true,
+    "stockCount": 45,
+    "isBestSeller": false,
+    "isNew": false,
+    "expressCoimbatore": true,
+    "rating": 4.8,
+    "reviewCount": 62,
+    "images": [
+      "https://www.shruthifashion.com/assets/shruthi_bottom_wear_1791448315562-QqtGSsIQ.jpg",
+      "https://www.shruthifashion.com/assets/product_tussar_silk_kurti_1791446947466-C_YN3ixL.jpg",
+      "https://www.shruthifashion.com/assets/shruthi_bottom_wear_1791448315562-QqtGSsIQ.jpg"
+    ],
+    "description": "Our top-rated everyday basic. Soft seamless waistband that leaves no marks on the skin. Guaranteed non-see-through opacity and zero lint/bobbling even after 50 washes.",
+    "fabricDetails": "190 GSM 4-Way stretch combed cotton lycra with Bio-Polish.",
+    "careInstructions": "Machine washable. No fading or shrinking.",
+    "specialFeatures": "Ultra-soft 4-way stretch that moves with you; broad elastic waist band.",
+    "reviews": [
+      {
+        "id": "rev-sf-7",
+        "userName": "Gowri Balaji",
+        "rating": 5,
+        "date": "3 days ago",
+        "city": "Near Balaji Textiles, Kovundampalayam",
+        "comment": "Bought 3 colors together from the shop! Excellent quality cloth, completely opaque and stretchable.",
+        "verifiedBuyer": true
+      }
+    ]
+  },
+  {
+    "id": "sf-anklefit-08",
+    "title": "Cotton Flex Ankle-Fit Cigarette Trousers",
+    "subtitle": "Formal and smart casual tailored pants with side pocket & ankle slit",
+    "price": 399,
+    "originalPrice": 650,
+    "category": "Bottom Wear",
+    "subcategory": "Ankle Fit",
+    "fabric": "Cotton Flex with Mild Stretch",
+    "occasion": "Office, College & Casual Ethnic",
+    "colors": [
+      {
+        "name": "Off-White Ivory",
+        "hex": "#F7F7F7"
+      },
+      {
+        "name": "Beige Camel",
+        "hex": "#D4B996"
+      },
+      {
+        "name": "Charcoal Grey",
+        "hex": "#374151"
+      }
+    ],
+    "sizes": [
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "inStock": true,
+    "stockCount": 25,
+    "isBestSeller": false,
+    "isNew": true,
+    "expressCoimbatore": true,
+    "rating": 4.9,
+    "reviewCount": 29,
+    "images": [
+      "https://www.shruthifashion.com/assets/shruthi_bottom_wear_1791448315562-QqtGSsIQ.jpg",
+      "https://www.shruthifashion.com/assets/product_tussar_silk_kurti_1791446947466-C_YN3ixL.jpg",
+      "https://www.shruthifashion.com/assets/shruthi_bottom_wear_1791448315562-QqtGSsIQ.jpg"
+    ],
+    "description": "A stylish upgrade over regular leggings. These cigarette pants feature a clean flat front, elasticated back for snug ease, side pocket for your phone, and a chic mini slit at the ankle hem.",
+    "fabricDetails": "Cotton Flex fabric with breathable weave and mild stretch.",
+    "careInstructions": "Normal wash. Warm iron for sharp crease.",
+    "specialFeatures": "One side deep mobile pocket + ankle hem side notch.",
+    "reviews": [
+      {
+        "id": "rev-sf-8",
+        "userName": "Swathi N.",
+        "rating": 5,
+        "date": "2 weeks ago",
+        "city": "Kovundampalayam, Coimbatore",
+        "comment": "So smart for office with straight kurtis. The side pocket fits a large phone easily!",
+        "verifiedBuyer": true
+      }
+    ]
+  },
+  {
+    "id": "sf-shimmer-09",
+    "title": "Festive Shimmer Lycra Ankle Pants",
+    "subtitle": "Glamorous golden & metallic shimmer stretch pants for grand celebrations",
+    "price": 499,
+    "originalPrice": 799,
+    "category": "Bottom Wear",
+    "subcategory": "Shimmer",
+    "fabric": "Metallic Lurex Poly-Spandex Blend",
+    "occasion": "Festivals, Weddings & Parties",
+    "colors": [
+      {
+        "name": "Antique Gold",
+        "hex": "#D4AF37"
+      },
+      {
+        "name": "Silver Shimmer",
+        "hex": "#E5E7EB"
+      },
+      {
+        "name": "Rose Gold",
+        "hex": "#FB7185"
+      }
+    ],
+    "sizes": [
+      "Free Size (Fits 28-36)",
+      "Plus Size (Fits 38-44)"
+    ],
+    "inStock": true,
+    "stockCount": 16,
+    "isBestSeller": false,
+    "isNew": true,
+    "expressCoimbatore": true,
+    "rating": 4.8,
+    "reviewCount": 17,
+    "images": [
+      "https://www.shruthifashion.com/assets/shruthi_bottom_wear_1791448315562-QqtGSsIQ.jpg",
+      "https://www.shruthifashion.com/assets/product_festive_anarkali_suit_1791446931244-DZz5l4bz.jpg",
+      "https://www.shruthifashion.com/assets/shruthi_bottom_wear_1791448315562-QqtGSsIQ.jpg"
+    ],
+    "description": "Add instant festive sparkle to any kurti or anarkali. Woven with fine micro-shimmer yarns that will not peel or drop glitter. Smooth inner lining ensures it is 100% itch-free and soft against sensitive skin.",
+    "fabricDetails": "Poly-lycra with woven micro-lurex metallic sheen, soft brushed interior.",
+    "careInstructions": "Hand wash gentle in cold water. Do not scrub or bleach.",
+    "specialFeatures": "Non-shedding woven shimmer with ultra-soft inner lining.",
+    "reviews": [
+      {
+        "id": "rev-sf-9",
+        "userName": "Divya Ramesh",
+        "rating": 5,
+        "date": "1 week ago",
+        "city": "Saibaba Colony, Coimbatore",
+        "comment": "Doesn’t itch at all! The antique gold shade matches almost all my festive kurtis.",
+        "verifiedBuyer": true
+      }
+    ]
+  },
+  {
+    "id": "sf-palazzo-10",
+    "title": "Wide Flare Rayon Printed Palazzo Pants",
+    "subtitle": "Breezy wide-leg palazzo with ethnic gold foil boota motifs",
+    "price": 449,
+    "originalPrice": 699,
+    "category": "Bottom Wear",
+    "subcategory": "Palazzo",
+    "fabric": "Heavy 140 GSM Rayon",
+    "occasion": "Daily & Festive Comfort",
+    "colors": [
+      {
+        "name": "Cream Gold Print",
+        "hex": "#FEF3C7"
+      },
+      {
+        "name": "Black Golden Print",
+        "hex": "#1C1917"
+      },
+      {
+        "name": "Maroon Gold",
+        "hex": "#7F1D1D"
+      }
+    ],
+    "sizes": [
+      "Free Size (Waist 28-38)",
+      "XXL (Waist 38-44)"
+    ],
+    "inStock": true,
+    "stockCount": 19,
+    "isBestSeller": false,
+    "isNew": false,
+    "expressCoimbatore": true,
+    "rating": 4.9,
+    "reviewCount": 32,
+    "images": [
+      "https://www.shruthifashion.com/assets/shruthi_bottom_wear_1791448315562-QqtGSsIQ.jpg",
+      "https://www.shruthifashion.com/assets/product_tussar_silk_kurti_1791446947466-C_YN3ixL.jpg",
+      "https://www.shruthifashion.com/assets/shruthi_bottom_wear_1791448315562-QqtGSsIQ.jpg"
+    ],
+    "description": "Enjoy unbeatable flow and airy breathability in Coimbatore weather. Wide bell flare with elasticated drawstring waist. Complements straight cut kurtis to create an instant kurti-palazzo set.",
+    "fabricDetails": "Heavy viscose rayon with fluid fall and durable prints.",
+    "careInstructions": "Gentle wash. Avoid direct sunlight drying.",
+    "specialFeatures": "Full elastic waistband with drawstring tie-up and flared 28-inch leg opening.",
+    "reviews": [
+      {
+        "id": "rev-sf-10",
+        "userName": "Meena K.",
+        "rating": 5,
+        "date": "3 weeks ago",
+        "city": "Kovundampalayam, Coimbatore",
+        "comment": "So airy and comfortable for daily wear. Quality is superb for ₹449!",
+        "verifiedBuyer": true
+      }
+    ]
+  },
+  {
     "id": "sf-shawl-reg-11",
     "title": "Soft Cotton Mulmul Daily Shawl / Dupatta (2.25m)",
     "subtitle": "Lightweight floral block print daily dupatta with tassel borders",
