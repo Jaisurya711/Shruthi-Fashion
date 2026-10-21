@@ -1,12 +1,8 @@
 {
-  "updatedAt": 1792583900424,
+  "updatedAt": 1792588483163,
   "stockMap": {
     "sf-straight-01": {
       "stockCount": 17,
-      "inStock": true
-    },
-    "sf-short-02": {
-      "stockCount": 15,
       "inStock": true
     },
     "sf-umbrella-03": {
