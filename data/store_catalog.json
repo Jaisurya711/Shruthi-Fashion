@@ -1,59 +1,59 @@
 [
   {
-    "id": "sf-short-02",
-    "title": "Cotton Peplum Short Kurti / Tunic",
-    "subtitle": "Trendy hip-length short kurti designed to pair with jeans & cigarette pants",
-    "price": 449,
-    "originalPrice": 699,
+    "id": "sf-straight-01",
+    "title": "Floral Gold Foil Print Straight Cut Kurti",
+    "subtitle": "Classic everyday office & college straight silhouette with side slits",
+    "price": 549,
+    "originalPrice": 899,
     "category": "Kurtis",
-    "subcategory": "Short Kurtis",
-    "fabric": "100% Breathable Combed Cotton",
-    "occasion": "College & Casual Outings",
+    "subcategory": "Straight Cut Kurti",
+    "fabric": "Pure Viscose Rayon",
+    "occasion": "Daily & Office Wear",
     "colors": [
       {
-        "name": "Blush Pink",
-        "hex": "#F472B6"
+        "name": "Teal Blue",
+        "hex": "#0E7490"
       },
       {
-        "name": "Indigo White",
-        "hex": "#1E3A8A"
+        "name": "Mustard Yellow",
+        "hex": "#D97706"
       },
       {
-        "name": "Olive Green",
-        "hex": "#65A30D"
+        "name": "Ruby Maroon",
+        "hex": "#991B1B"
       }
     ],
     "sizes": [
-      "S",
       "M",
       "L",
       "XL",
-      "XXL"
+      "XXL",
+      "3XL"
     ],
     "inStock": true,
-    "stockCount": 15,
+    "stockCount": 17,
     "isBestSeller": false,
-    "isNew": true,
+    "isNew": false,
     "expressCoimbatore": true,
-    "rating": 4.8,
-    "reviewCount": 28,
+    "rating": 4.9,
+    "reviewCount": 34,
     "images": [
       "https://www.shruthifashion.com/assets/product_tussar_silk_kurti_1791446947466-C_YN3ixL.jpg",
-      "https://www.shruthifashion.com/assets/shruthi_western_wear_1791448297281-BGTW-c_G.jpg",
+      "https://www.shruthifashion.com/assets/shruthi_feeding_kurti_1791448275230-3pp1m3EY.jpg",
       "https://www.shruthifashion.com/assets/product_tussar_silk_kurti_1791446947466-C_YN3ixL.jpg"
     ],
-    "description": "A contemporary college and daily-wear essential. Hip-length peplum silhouette with gentle gathered waist and mandarin V-notch neckline. Looks super chic over blue denim jeans or ankle pants.",
-    "fabricDetails": "100% Pure Pre-shrunk Coimbatore mill cotton.",
-    "careInstructions": "Normal hand or machine wash. Line dry in shade.",
-    "specialFeatures": "Gathered waist flare, stylish wooden buttons on front yoke.",
+    "description": "Crafted with soft breathable rayon that drapes gracefully without clinging. Features delicate gold-foil geometric borders on the placket and 3/4th sleeves. Pairs effortlessly with ankle fit pants or leggings.",
+    "fabricDetails": "140 GSM Heavy Rayon with color-fast gold foil printing.",
+    "careInstructions": "Gentle machine wash inside out. Do not iron directly on gold foil prints.",
+    "specialFeatures": "Side slits with reinforced bar-tack stitching for all-day comfort.",
     "reviews": [
       {
-        "id": "rev-sf-2",
-        "userName": "Harini Sundar",
+        "id": "rev-sf-1",
+        "userName": "Pavithra M.",
         "rating": 5,
-        "date": "1 week ago",
-        "city": "Edayarpalayam, Coimbatore",
-        "comment": "My go-to short kurti for daily college wear! Shrink-proof and comfortable even in hot sun.",
+        "date": "2 days ago",
+        "city": "Kovundampalayam, Coimbatore",
+        "comment": "Directly bought this from their 1st floor shop above City Cake shop! The fit is perfect and fabric is so soft.",
         "verifiedBuyer": true
       }
     ]
