@@ -1,6 +1,10 @@
 {
-  "updatedAt": 1792590118081,
+  "updatedAt": 1792591948257,
   "stockMap": {
+    "sf-custom-1792591899998-xkeu": {
+      "stockCount": 15,
+      "inStock": true
+    },
     "sf-custom-1792590101851-08sc": {
       "stockCount": 4,
       "inStock": true
