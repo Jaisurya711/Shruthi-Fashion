@@ -1,14 +1,6 @@
 {
-  "updatedAt": 1792588483163,
+  "updatedAt": 1792588486253,
   "stockMap": {
-    "sf-straight-01": {
-      "stockCount": 17,
-      "inStock": true
-    },
-    "sf-umbrella-03": {
-      "stockCount": 12,
-      "inStock": true
-    },
     "sf-feeding-04": {
       "stockCount": 22,
       "inStock": true
