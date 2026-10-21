@@ -1,1 +1,53 @@
-{"updatedAt": 1792484500, "stockMap": {"sf-straight-01": {"stockCount": 17, "inStock": true}}}
+{
+  "updatedAt": 1792583900424,
+  "stockMap": {
+    "sf-straight-01": {
+      "stockCount": 17,
+      "inStock": true
+    },
+    "sf-short-02": {
+      "stockCount": 15,
+      "inStock": true
+    },
+    "sf-umbrella-03": {
+      "stockCount": 12,
+      "inStock": true
+    },
+    "sf-feeding-04": {
+      "stockCount": 22,
+      "inStock": true
+    },
+    "sf-western-05": {
+      "stockCount": 14,
+      "inStock": true
+    },
+    "sf-jeans-06": {
+      "stockCount": 20,
+      "inStock": true
+    },
+    "sf-leggings-07": {
+      "stockCount": 45,
+      "inStock": true
+    },
+    "sf-anklefit-08": {
+      "stockCount": 25,
+      "inStock": true
+    },
+    "sf-shimmer-09": {
+      "stockCount": 16,
+      "inStock": true
+    },
+    "sf-palazzo-10": {
+      "stockCount": 19,
+      "inStock": true
+    },
+    "sf-shawl-reg-11": {
+      "stockCount": 30,
+      "inStock": true
+    },
+    "sf-shawl-grand-12": {
+      "stockCount": 12,
+      "inStock": true
+    }
+  }
+}

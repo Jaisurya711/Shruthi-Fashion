@@ -101,15 +101,7 @@ export const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
             <span className="text-xs text-stone-500 mt-1">{product.fabric}</span>
           </div>
         ) : (
-          <>
-            {/* Ambient background blur that adapts to uploaded photo colors */}
-            <img
-              src={displayImage}
-              alt=""
-              aria-hidden="true"
-              className="absolute inset-0 w-full h-full object-cover blur-xl opacity-25 scale-125 pointer-events-none"
-            />
-            {/* Primary uncropped product photo in true uploaded aspect ratio */}
+          <div className="relative w-full h-full flex items-center justify-center p-1.5 sm:p-2 bg-[#FAF9F5]">
             <img
               src={displayImage}
               alt={product.title}
@@ -117,11 +109,11 @@ export const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
               onError={() => setImgError(true)}
               referrerPolicy="no-referrer"
               loading="lazy"
-              className={`relative z-10 max-w-full max-h-full w-auto h-auto object-contain transition-transform duration-500 group-hover:scale-105 ${
+              className={`w-full h-full object-contain object-center transition-transform duration-500 group-hover:scale-[1.03] ${
                 isOutOfStock ? 'grayscale-[30%]' : ''
               }`}
             />
-          </>
+          </div>
         )}
       </div>
 

@@ -10,6 +10,15 @@ import grandShawlImg from '../assets/images/product_coimbatore_cotton_saree_1791
 import heroImg from '../assets/images/hero_coimbatore_boutique_1791446890433.jpg';
 
 export const HERO_IMAGE = heroImg;
+export {
+  feedingKurtiImg,
+  westernWearImg,
+  bottomWearImg,
+  straightKurtiImg,
+  umbrellaKurtiImg,
+  grandShawlImg,
+  heroImg,
+};
 
 export const STORE_BANK_DETAILS = {
   accountHolderName: 'Shruthi Fashion',

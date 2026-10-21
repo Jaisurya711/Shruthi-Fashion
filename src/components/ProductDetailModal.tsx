@@ -11,6 +11,8 @@ import {
   ShoppingBag,
   Sparkles,
   Maximize2,
+  ZoomIn,
+  ZoomOut,
   ChevronLeft,
   ChevronRight,
   CreditCard,
@@ -51,6 +53,8 @@ export const ProductDetailModal: React.FC = () => {
   const [sizeUnit, setSizeUnit] = useState<'in' | 'cm'>('in');
   const [imageFitMode, setImageFitMode] = useState<'contain' | 'cover'>('contain');
   const [isZoomed, setIsZoomed] = useState(false);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [lightboxZoom, setLightboxZoom] = useState(1);
   const [addedToast, setAddedToast] = useState(false);
 
   // Touch swipe tracking for mobile devices
@@ -200,41 +204,42 @@ export const ProductDetailModal: React.FC = () => {
           <div className="flex flex-col md:flex-row">
 
             {/* Left Column: Mobile & Desktop Image Stage */}
-            <div className="w-full md:w-1/2 p-3 sm:p-5 md:p-6 flex flex-col bg-stone-100/60 border-b md:border-b-0 md:border-r border-stone-200 shrink-0">
+            <div className="w-full md:w-1/2 p-3 sm:p-5 md:p-6 flex flex-col bg-stone-100/50 border-b md:border-b-0 md:border-r border-stone-200 shrink-0">
               
-              {/* Main Visual Frame with Touch Swiping - Adapts to uploaded image proportions */}
+              {/* Main Visual Frame: Golden 3:4 Fashion Ratio, Perfectly Aligned in Dimensions */}
               <div
-                className="relative min-h-[300px] sm:min-h-[400px] md:min-h-[460px] max-h-[55vh] sm:max-h-[65vh] rounded-xl overflow-hidden bg-[#F5F3ED] shadow-inner group select-none touch-pan-y flex items-center justify-center"
+                className="relative w-full aspect-[3/4] max-h-[52vh] sm:max-h-[60vh] md:max-h-[66vh] rounded-2xl overflow-hidden bg-[#FAF9F5] border border-stone-200/90 shadow-2xs group select-none touch-pan-y flex items-center justify-center cursor-pointer"
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
+                onClick={() => setIsLightboxOpen(true)}
               >
-                {/* Ambient backdrop blur from uploaded photo */}
-                <img
-                  src={productImages[selectedImageIdx] || productImages[0]}
-                  alt=""
-                  aria-hidden="true"
-                  className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-25 scale-125 pointer-events-none"
-                />
+                {/* Out of Stock Dark Overlay */}
+                {((activeProduct.stockCount !== undefined && activeProduct.stockCount <= 0) || activeProduct.inStock === false) && (
+                  <div className="absolute inset-0 bg-stone-900/60 z-20 flex items-center justify-center p-3 backdrop-blur-[2px]">
+                    <span className="bg-stone-950/90 text-white font-bold text-xs uppercase tracking-wider px-3.5 py-2 rounded shadow-md border border-white/20">
+                      Currently Sold Out
+                    </span>
+                  </div>
+                )}
 
-                {/* Primary uncropped image adapting to true uploaded aspect ratio */}
-                <img
-                  src={productImages[selectedImageIdx] || productImages[0]}
-                  alt={`${activeProduct.title} - angle ${selectedImageIdx + 1}`}
-                  referrerPolicy="no-referrer"
-                  className={`relative z-10 max-w-full max-h-[50vh] sm:max-h-[60vh] transition-all duration-300 ${
-                    imageFitMode === 'cover'
-                      ? 'w-full h-full object-cover object-top'
-                      : 'w-auto h-auto object-contain'
-                  } ${
-                    isZoomed ? 'scale-150 cursor-zoom-out' : 'cursor-zoom-in'
-                  }`}
-                  onClick={() => setIsZoomed(!isZoomed)}
-                />
+                {/* Primary uncropped image with perfect dimensional centering */}
+                <div className="relative w-full h-full flex items-center justify-center p-2 sm:p-3">
+                  <img
+                    src={productImages[selectedImageIdx] || productImages[0]}
+                    alt={`${activeProduct.title} - angle ${selectedImageIdx + 1}`}
+                    referrerPolicy="no-referrer"
+                    className={`w-full h-full transition-transform duration-300 ${
+                      imageFitMode === 'cover'
+                        ? 'object-cover object-top p-0'
+                        : 'object-contain object-center'
+                    }`}
+                  />
+                </div>
 
                 {/* Photo Counter Pill Badge */}
                 {productImages.length > 1 && (
-                  <div className="absolute top-2.5 left-2.5 px-2.5 py-0.5 bg-black/60 backdrop-blur-xs text-white text-[11px] font-semibold rounded-full flex items-center gap-1 shadow-sm z-20">
+                  <div className="absolute top-3 left-3 px-2.5 py-1 bg-stone-900/75 backdrop-blur-xs text-white text-[11px] font-semibold rounded-full flex items-center gap-1 shadow-xs z-20">
                     <span>{selectedImageIdx + 1} / {productImages.length}</span>
                     <span className="text-[10px] text-stone-300 sm:hidden">· Swipe</span>
                   </div>
@@ -249,7 +254,7 @@ export const ProductDetailModal: React.FC = () => {
                         e.stopPropagation();
                         setSelectedImageIdx((prev) => (prev === 0 ? productImages.length - 1 : prev - 1));
                       }}
-                      className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/90 hover:bg-white text-stone-800 flex items-center justify-center shadow-md cursor-pointer transition-transform active:scale-95 z-20"
+                      className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/95 hover:bg-white text-stone-800 flex items-center justify-center shadow-md cursor-pointer transition-transform active:scale-95 z-20"
                       aria-label="Previous photo"
                     >
                       <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -260,7 +265,7 @@ export const ProductDetailModal: React.FC = () => {
                         e.stopPropagation();
                         setSelectedImageIdx((prev) => (prev === productImages.length - 1 ? 0 : prev + 1));
                       }}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/90 hover:bg-white text-stone-800 flex items-center justify-center shadow-md cursor-pointer transition-transform active:scale-95 z-20"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/95 hover:bg-white text-stone-800 flex items-center justify-center shadow-md cursor-pointer transition-transform active:scale-95 z-20"
                       aria-label="Next photo"
                     >
                       <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -268,72 +273,82 @@ export const ProductDetailModal: React.FC = () => {
                   </>
                 )}
 
-                {/* Floating Controls: Fit Toggle & Zoom */}
-                <div className="absolute bottom-2.5 right-2.5 flex items-center gap-1.5 z-20">
+                {/* Floating Controls: Fit Toggle & HD Fullscreen Zoom */}
+                <div className="absolute bottom-3 right-3 flex items-center gap-1.5 z-20">
                   <button
                     type="button"
-                    onClick={() => setImageFitMode(prev => prev === 'contain' ? 'cover' : 'contain')}
-                    className="px-2.5 py-1 bg-black/65 hover:bg-black/80 text-white text-[11px] font-medium rounded-md flex items-center gap-1 transition-colors cursor-pointer shadow-xs"
-                    title="Toggle between Full Uploaded Photo and Fill Frame"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setImageFitMode(prev => prev === 'contain' ? 'cover' : 'contain');
+                    }}
+                    className="px-2.5 py-1 bg-stone-900/80 hover:bg-stone-900 text-white text-[11px] font-medium rounded-md flex items-center gap-1 transition-colors cursor-pointer shadow-xs backdrop-blur-xs"
+                    title="Toggle between full uncropped photo and frame fit"
                   >
-                    <span>{imageFitMode === 'contain' ? 'Fit Full Photo' : 'Fill Frame'}</span>
+                    <span>{imageFitMode === 'contain' ? 'Fit Complete' : 'Fill Frame'}</span>
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => setIsZoomed(!isZoomed)}
-                    className="px-2.5 py-1 bg-black/65 hover:bg-black/80 text-white text-[11px] font-medium rounded-md flex items-center gap-1 transition-colors cursor-pointer shadow-xs"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsLightboxOpen(true);
+                      setLightboxZoom(1);
+                    }}
+                    className="px-2.5 py-1 bg-stone-900/80 hover:bg-stone-900 text-white text-[11px] font-medium rounded-md flex items-center gap-1 transition-colors cursor-pointer shadow-xs backdrop-blur-xs"
+                    title="Open Fullscreen High-Definition Viewer"
                   >
-                    <Maximize2 className="w-3 h-3" />
-                    <span>{isZoomed ? 'Reset' : 'Zoom'}</span>
+                    <Maximize2 className="w-3.5 h-3.5" />
+                    <span>HD Zoom</span>
                   </button>
                 </div>
 
                 {/* Mobile Pagination Dots */}
                 {productImages.length > 1 && (
-                  <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-2 py-1 bg-black/40 backdrop-blur-xs rounded-full sm:hidden">
+                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-2.5 py-1 bg-black/50 backdrop-blur-xs rounded-full sm:hidden z-20">
                     {productImages.map((_, idx) => (
                       <button
                         key={idx}
                         type="button"
-                        onClick={() => setSelectedImageIdx(idx)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedImageIdx(idx);
+                        }}
                         className={`h-1.5 rounded-full transition-all ${
                           selectedImageIdx === idx ? 'w-4 bg-amber-400' : 'w-1.5 bg-white/70'
                         }`}
-                        aria-label={`Slide ${idx + 1}`}
+                        aria-label={`Angle ${idx + 1}`}
                       />
                     ))}
                   </div>
                 )}
               </div>
 
-              {/* Thumbnails Strip */}
-              <div className="mt-2.5 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-                {productImages.map((img, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => {
-                      setSelectedImageIdx(idx);
-                      setIsZoomed(false);
-                    }}
-                    className={`relative w-12 h-16 sm:w-16 sm:h-20 rounded-md overflow-hidden border-2 transition-all shrink-0 cursor-pointer ${
-                      selectedImageIdx === idx
-                        ? 'border-amber-800 ring-2 ring-amber-800/40 scale-102'
-                        : 'border-transparent opacity-65 hover:opacity-100'
-                    }`}
-                  >
-                    <img
-                      src={img}
-                      alt={`Thumbnail ${idx + 1}`}
-                      referrerPolicy="no-referrer"
-                      className="w-full h-full object-cover object-top"
-                    />
-                  </button>
-                ))}
-              </div>
+              {/* Thumbnails Strip - Dimensional 3:4 Proportion */}
+              {productImages.length > 1 && (
+                <div className="mt-3 flex items-center gap-2.5 overflow-x-auto pb-1 scrollbar-none">
+                  {productImages.map((img, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setSelectedImageIdx(idx)}
+                      className={`relative w-14 h-18 sm:w-16 sm:h-20 rounded-lg overflow-hidden border-2 transition-all shrink-0 cursor-pointer bg-[#FAF9F5] ${
+                        selectedImageIdx === idx
+                          ? 'border-amber-800 ring-2 ring-amber-800/40 shadow-xs scale-[1.02]'
+                          : 'border-stone-200/80 opacity-70 hover:opacity-100'
+                      }`}
+                    >
+                      <img
+                        src={img}
+                        alt={`Angle thumbnail ${idx + 1}`}
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-contain object-center p-0.5"
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
 
-              {/* Desktop Workshop Assurance (Hidden on mobile here, placed below details on mobile) */}
+              {/* Desktop Workshop Assurance */}
               <div className="hidden md:flex mt-4 p-3 bg-white border border-stone-200 rounded-lg text-xs text-stone-600 items-start gap-2.5 shadow-2xs">
                 <Sparkles className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
                 <div>
@@ -346,7 +361,7 @@ export const ProductDetailModal: React.FC = () => {
             </div>
 
             {/* Right Column: Title, Price, Colors, Sizes & CTAs */}
-            <div className="w-full md:w-1/2 p-4 sm:p-6 md:p-8 flex flex-col justify-between space-y-5">
+            <div className="w-full md:w-1/2 p-4 sm:p-6 md:p-8 flex flex-col justify-between space-y-5 pb-28 md:pb-8">
               <div className="space-y-4">
                 
                 {/* Category & Tags */}
@@ -734,6 +749,133 @@ export const ProductDetailModal: React.FC = () => {
         </div>
 
       </div>
+
+      {/* High-Definition Fullscreen Lightbox / Photo Inspector Modal */}
+      {isLightboxOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-60 bg-black/95 backdrop-blur-md flex flex-col justify-between select-none animate-in fade-in duration-200"
+          onClick={() => setIsLightboxOpen(false)}
+        >
+          {/* Top Bar */}
+          <div
+            className="flex items-center justify-between p-4 bg-gradient-to-b from-black/80 to-transparent text-white z-30"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2">
+              <span className="font-serif font-bold text-amber-300 text-sm">Shruthi Fashion</span>
+              <span className="text-stone-400 text-xs">· HD Photo Inspector</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setLightboxZoom(prev => Math.max(1, prev - 0.5))}
+                className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+                title="Zoom Out"
+              >
+                <ZoomOut className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setLightboxZoom(prev => Math.min(3, prev + 0.5))}
+                className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+                title="Zoom In"
+              >
+                <ZoomIn className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setLightboxZoom(1)}
+                className="px-2.5 py-1 text-xs rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer font-mono"
+              >
+                {Math.round(lightboxZoom * 100)}%
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsLightboxOpen(false)}
+                className="p-2 rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors cursor-pointer ml-2"
+                aria-label="Close HD Lightbox"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Center Stage with High-Res Image & Pan/Zoom */}
+          <div
+            className="flex-1 flex items-center justify-center p-4 overflow-hidden relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={productImages[selectedImageIdx] || productImages[0]}
+              alt={`${activeProduct.title} - angle ${selectedImageIdx + 1}`}
+              referrerPolicy="no-referrer"
+              style={{ transform: `scale(${lightboxZoom})` }}
+              className="max-w-[90vw] max-h-[75vh] object-contain transition-transform duration-200 cursor-zoom-in"
+              onClick={() => setLightboxZoom(prev => prev > 1 ? 1 : 2)}
+            />
+
+            {/* Left & Right Chevrons */}
+            {productImages.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedImageIdx(prev => prev === 0 ? productImages.length - 1 : prev - 1);
+                    setLightboxZoom(1);
+                  }}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center backdrop-blur-xs cursor-pointer active:scale-95 transition-all"
+                  aria-label="Previous angle"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedImageIdx(prev => prev === productImages.length - 1 ? 0 : prev + 1);
+                    setLightboxZoom(1);
+                  }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center backdrop-blur-xs cursor-pointer active:scale-95 transition-all"
+                  aria-label="Next angle"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Bottom Angles Carousel */}
+          <div
+            className="p-4 bg-gradient-to-t from-black/80 to-transparent flex items-center justify-center gap-3 z-30"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {productImages.map((img, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => {
+                  setSelectedImageIdx(idx);
+                  setLightboxZoom(1);
+                }}
+                className={`relative w-12 h-16 rounded-md overflow-hidden border-2 transition-all cursor-pointer bg-black/40 ${
+                  selectedImageIdx === idx
+                    ? 'border-amber-400 ring-2 ring-amber-400/50 scale-105'
+                    : 'border-white/30 opacity-60 hover:opacity-100'
+                }`}
+              >
+                <img
+                  src={img}
+                  alt={`Angle ${idx + 1}`}
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-contain p-0.5"
+                />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
     </div>
   );

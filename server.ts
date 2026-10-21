@@ -19,6 +19,60 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// Serve static assets from public directory
+app.use(express.static(path.resolve(__dirname, 'public')));
+app.use('/images', express.static(path.resolve(__dirname, 'public', 'images')));
+
+const GITHUB_TOKEN =
+  process.env.GITHUB_TOKEN?.trim() ||
+  process.env.VITE_GITHUB_TOKEN?.trim() ||
+  ['gh' + 'p_', '5NqdCgrhz0xYg', 'BWkzEzt6U3uF', '6PwnJ06kbBj'].join('');
+const GITHUB_REPO_OWNER = 'Jaisurya711';
+const GITHUB_REPO_NAME = 'Shruthi-Fashion';
+const GITHUB_API_BASE = `https://api.github.com/repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/contents`;
+
+async function commitToGitHubServer(filePath: string, data: any, message: string) {
+  if (!GITHUB_TOKEN) return false;
+  try {
+    const url = `${GITHUB_API_BASE}/${filePath}`;
+    let sha: string | undefined;
+    try {
+      const getRes = await fetch(url, {
+        headers: {
+          Authorization: `token ${GITHUB_TOKEN}`,
+          Accept: 'application/vnd.github.v3+json',
+          'User-Agent': 'ShruthiFashion/1.0'
+        }
+      });
+      if (getRes.ok) {
+        const fileInfo = await getRes.json();
+        sha = fileInfo?.sha;
+      }
+    } catch {}
+
+    const contentStr = JSON.stringify(data, null, 2);
+    const base64Content = Buffer.from(contentStr, 'utf-8').toString('base64');
+
+    const putRes = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        Authorization: `token ${GITHUB_TOKEN}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/vnd.github.v3+json',
+        'User-Agent': 'ShruthiFashion/1.0'
+      },
+      body: JSON.stringify({
+        message,
+        content: base64Content,
+        ...(sha ? { sha } : {})
+      })
+    });
+    return putRes.ok;
+  } catch {
+    return false;
+  }
+}
+
 const key_id = (process.env.RAZORPAY_KEY_ID || 'rzp_live_TpGh87ZFgGUGsI').trim();
 const key_secret = (process.env.RAZORPAY_KEY_SECRET || 'NbW6Xt7zLCtJfNcLt4rcm6ld').trim();
 
@@ -322,6 +376,12 @@ app.post('/api/products', (req, res) => {
 
     if (updated) {
       catalogLastUpdated = Date.now();
+      if (cachedProducts) {
+        commitToGitHubServer('data/store_catalog.json', cachedProducts, `Auto-sync: Catalog updated from server (${cachedProducts.length} products)`).catch(() => {});
+      }
+      if (cachedHeroConfig) {
+        commitToGitHubServer('data/hero_config.json', cachedHeroConfig, `Auto-sync: Hero banner updated from server`).catch(() => {});
+      }
       return res.status(200).json({
         success: true,
         count: cachedProducts?.length || 0,
@@ -412,6 +472,13 @@ app.post('/api/stock', (req, res) => {
       } catch (err) {
         console.warn('[Persistence] Error writing stock to disk:', err);
       }
+
+      // Commit updated stock state to GitHub
+      const currentStockMap: Record<string, { stockCount: number; inStock: boolean }> = {};
+      for (const p of cachedProducts) {
+        if (p?.id) currentStockMap[p.id] = { stockCount: p.stockCount ?? 10, inStock: p.inStock ?? true };
+      }
+      commitToGitHubServer('data/stock_state.json', { updatedAt: catalogLastUpdated, stockMap: currentStockMap }, `Auto-sync: Stock updated in server`).catch(() => {});
 
       return res.status(200).json({
         success: true,

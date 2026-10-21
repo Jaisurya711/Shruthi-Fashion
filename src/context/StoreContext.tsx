@@ -1,6 +1,18 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Product, CartItem, UserProfile, UserOrder, Address, FilterState, StoreBankDetails, HeroConfig } from '../types/store';
-import { INITIAL_PRODUCTS, getStoreBankDetails, DEFAULT_STORE_CATEGORIES, DEFAULT_STORE_SUBCATEGORIES, HERO_IMAGE } from '../data/products';
+import {
+  INITIAL_PRODUCTS,
+  getStoreBankDetails,
+  DEFAULT_STORE_CATEGORIES,
+  DEFAULT_STORE_SUBCATEGORIES,
+  HERO_IMAGE,
+  feedingKurtiImg,
+  westernWearImg,
+  bottomWearImg,
+  straightKurtiImg,
+  umbrellaKurtiImg,
+  grandShawlImg
+} from '../data/products';
 import { sendOrderNotificationEmail } from '../services/notificationService';
 import {
   fetchLatestCatalogFromCloud,
@@ -86,10 +98,41 @@ interface StoreContextType {
   setProductsList: (products: Product[]) => void;
 }
 
+const ASSET_REMAP: Record<string, string> = {
+  'feeding': feedingKurtiImg,
+  'western': westernWearImg,
+  'bottom': bottomWearImg,
+  'straight': straightKurtiImg,
+  'umbrella': umbrellaKurtiImg,
+  'anarkali': umbrellaKurtiImg,
+  'shawl': grandShawlImg,
+  'saree': grandShawlImg,
+  'tussar': straightKurtiImg,
+};
+
+export function resolveProductImage(url: string): string {
+  if (!url) return straightKurtiImg;
+  if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  const lower = url.toLowerCase();
+  for (const [key, assetUrl] of Object.entries(ASSET_REMAP)) {
+    if (lower.includes(key)) {
+      return assetUrl;
+    }
+  }
+  if (url.includes('images/')) {
+    const filename = url.split('/').pop();
+    if (filename) return `/images/${filename}`;
+  }
+  return url || straightKurtiImg;
+}
+
 export function normalizeProduct(p: any): Product {
-  const images = Array.isArray(p?.images) && p.images.length > 0
+  const rawImages = Array.isArray(p?.images) && p.images.length > 0
     ? p.images
-    : (p?.image ? [p.image] : [INITIAL_PRODUCTS[0]?.images[0] || '']);
+    : (p?.image ? [p.image] : [straightKurtiImg]);
+  const images = rawImages.map(resolveProductImage);
   const colors = Array.isArray(p?.colors) && p.colors.length > 0
     ? p.colors
     : [{ name: 'Standard', hex: '#842D2D' }];
