@@ -1,1 +1,145 @@
-[]
+[
+  {
+    "id": "ord-demo-2",
+    "orderNumber": "SF-2026-6204",
+    "date": "2026-10-15",
+    "items": [
+      {
+        "id": "cart-demo-2",
+        "product": {
+          "title": "Tussar Silk Festive Kurti with Zari Neck",
+          "category": "Kurtis",
+          "fabric": "Tussar Silk",
+          "price": 899,
+          "id": "sf-1792640359741-gvlp",
+          "subtitle": "",
+          "originalPrice": 899,
+          "subcategory": "Straight Cut Kurti",
+          "occasion": "Daily Wear",
+          "colors": [
+            {
+              "name": "Standard",
+              "hex": "#842D2D"
+            }
+          ],
+          "sizes": [
+            "Standard",
+            "Free Size"
+          ],
+          "images": [
+            "https://www.shruthifashion.com/assets/product_tussar_silk_kurti_1791446947466-C_YN3ixL.jpg"
+          ],
+          "inStock": true,
+          "stockCount": 10,
+          "isBestSeller": false,
+          "isNew": false,
+          "expressCoimbatore": false,
+          "rating": 4.8,
+          "reviewCount": 15,
+          "description": "",
+          "fabricDetails": "Premium hand-checked fabric",
+          "careInstructions": "Dry in shade",
+          "specialFeatures": "",
+          "reviews": []
+        },
+        "selectedSize": "L",
+        "selectedColor": "Emerald Green",
+        "quantity": 2
+      }
+    ],
+    "subtotal": 1798,
+    "discount": 0,
+    "shippingFee": 80,
+    "total": 1878,
+    "address": {
+      "id": "addr-demo-2",
+      "fullName": "Deepa Sundararajan",
+      "phone": "9443210987",
+      "street": "Flat 3B, Green Meadows, Trichy Road",
+      "area": "Near Singanallur Signal",
+      "city": "Coimbatore",
+      "pincode": "641005",
+      "state": "Tamil Nadu"
+    },
+    "paymentMethod": "UPI",
+    "paymentDetails": {
+      "upiId": "deepa@okaxis",
+      "utrNumber": "UPI429018449102"
+    },
+    "deliveryStatus": "Dispatched from Coimbatore",
+    "courierPartner": "Professional Couriers",
+    "trackingNumber": "TPC-CBE-99238411",
+    "estimatedDelivery": "3 Business Days"
+  },
+  {
+    "id": "ord-demo-3",
+    "orderNumber": "SF-2026-3112",
+    "date": "2026-10-14",
+    "items": [
+      {
+        "id": "cart-demo-3",
+        "product": {
+          "title": "Grand Zari Silk Shawl - Temple Border",
+          "category": "Grand Shawls",
+          "fabric": "Art Silk",
+          "price": 899,
+          "id": "sf-1792640359741-ne85",
+          "subtitle": "",
+          "originalPrice": 899,
+          "subcategory": "Straight Cut Kurti",
+          "occasion": "Daily Wear",
+          "colors": [
+            {
+              "name": "Standard",
+              "hex": "#842D2D"
+            }
+          ],
+          "sizes": [
+            "Standard",
+            "Free Size"
+          ],
+          "images": [
+            "https://www.shruthifashion.com/assets/product_tussar_silk_kurti_1791446947466-C_YN3ixL.jpg"
+          ],
+          "inStock": true,
+          "stockCount": 10,
+          "isBestSeller": false,
+          "isNew": false,
+          "expressCoimbatore": false,
+          "rating": 4.8,
+          "reviewCount": 15,
+          "description": "",
+          "fabricDetails": "Premium hand-checked fabric",
+          "careInstructions": "Dry in shade",
+          "specialFeatures": "",
+          "reviews": []
+        },
+        "selectedSize": "Standard",
+        "selectedColor": "Temple Gold",
+        "quantity": 1
+      }
+    ],
+    "subtotal": 899,
+    "discount": 0,
+    "shippingFee": 80,
+    "total": 979,
+    "address": {
+      "id": "addr-demo-3",
+      "fullName": "Ananya Vijay",
+      "phone": "9790044521",
+      "street": "12/4 Annanagar East, Avinashi Road",
+      "area": "Opposite PSG Tech, Peelamedu",
+      "city": "Coimbatore",
+      "pincode": "641004",
+      "state": "Tamil Nadu"
+    },
+    "paymentMethod": "Razorpay",
+    "paymentDetails": {
+      "razorpayPaymentId": "pay_rzp_cbe_3112"
+    },
+    "deliveryStatus": "Delivered",
+    "courierPartner": "DTDC Express",
+    "trackingNumber": "DTDC-CBE-3112",
+    "estimatedDelivery": "Delivered"
+  }
+]
