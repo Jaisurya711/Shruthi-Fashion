@@ -64,6 +64,7 @@ export const StoreManagerModal: React.FC = () => {
     syncCatalog,
     setProductsList,
     updateProductStock,
+    updateProductSizeStock,
     addManualOrder,
     refreshOrders
   } = useStore();
@@ -333,6 +334,7 @@ export const StoreManagerModal: React.FC = () => {
   const [editStockCount, setEditStockCount] = useState('');
   const [editImages, setEditImages] = useState<string[]>([]);
   const [editImageUrlInput, setEditImageUrlInput] = useState('');
+  const [editSizeStock, setEditSizeStock] = useState<Record<string, number>>({});
 
   // File Input Refs for direct Device / Phone Gallery Upload
   const addFileInputRef = useRef<HTMLInputElement>(null);
@@ -525,14 +527,79 @@ export const StoreManagerModal: React.FC = () => {
     setEditStockCount(p.stockCount !== undefined ? p.stockCount.toString() : '10');
     setEditImages(Array.isArray(p.images) ? [...p.images] : []);
     setEditImageUrlInput('');
+
+    // Initialize per-size stock
+    const sizes = Array.isArray(p.sizes) && p.sizes.length > 0 ? p.sizes : ['Standard'];
+    const sMap: Record<string, number> = {};
+    sizes.forEach(sz => {
+      sMap[sz] = p.sizeStock && p.sizeStock[sz] !== undefined
+        ? Number(p.sizeStock[sz]) || 0
+        : Math.max(0, Math.floor((p.stockCount || 1) / sizes.length)) || 1;
+    });
+    setEditSizeStock(sMap);
+  };
+
+  const handleEditSizeStockChange = (sz: string, delta: number) => {
+    setEditSizeStock(prev => {
+      const current = prev[sz] || 0;
+      const next = Math.max(0, current + delta);
+      const updated = { ...prev, [sz]: next };
+      const sum = Object.values(updated).reduce((s, n) => s + (Number(n) || 0), 0);
+      setEditStockCount(sum.toString());
+      return updated;
+    });
+  };
+
+  const handleEditSizeStockSet = (sz: string, val: number) => {
+    setEditSizeStock(prev => {
+      const next = Math.max(0, val);
+      const updated = { ...prev, [sz]: next };
+      const sum = Object.values(updated).reduce((s, n) => s + (Number(n) || 0), 0);
+      setEditStockCount(sum.toString());
+      return updated;
+    });
+  };
+
+  const handleEditSizeStockToggle = (sz: string) => {
+    setEditSizeStock(prev => {
+      const current = prev[sz] || 0;
+      const next = current > 0 ? 0 : 2;
+      const updated = { ...prev, [sz]: next };
+      const sum = Object.values(updated).reduce((s, n) => s + (Number(n) || 0), 0);
+      setEditStockCount(sum.toString());
+      return updated;
+    });
+  };
+
+  const handleQuickSingleSizeStockChange = async (productId: string, sz: string, delta: number) => {
+    const prod = products.find(p => p.id === productId);
+    if (!prod) return;
+    const sizes = Array.isArray(prod.sizes) && prod.sizes.length > 0 ? prod.sizes : ['Standard'];
+    const curSizeStock: Record<string, number> = { ...(prod.sizeStock || {}) };
+    sizes.forEach(s => {
+      if (curSizeStock[s] === undefined) {
+        curSizeStock[s] = Math.max(0, Math.floor((prod.stockCount || 1) / sizes.length)) || 1;
+      }
+    });
+
+    const nextVal = Math.max(0, (curSizeStock[sz] || 0) + delta);
+    curSizeStock[sz] = nextVal;
+
+    try {
+      await updateProductSizeStock(productId, curSizeStock);
+      showToast(`✅ "${prod.title}" Size ${sz} stock: ${nextVal} pcs (${nextVal > 0 ? 'In Stock' : 'Out of Stock'})!`);
+    } catch {
+      showToast('⚠️ Stock updated on device.');
+    }
   };
 
   const handleSaveProductEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingProduct) return;
     const finalImages = editImages.length > 0 ? editImages : (editingProduct.images || []);
-    const parsedStock = parseInt(editStockCount || '0', 10);
-    const finalStock = isNaN(parsedStock) ? 0 : Math.max(0, parsedStock);
+    const sumSizeStock = Object.values(editSizeStock).reduce((sum, n) => sum + Math.max(0, Number(n) || 0), 0);
+    const finalStock = sumSizeStock;
+    const finalInStock = finalStock > 0;
 
     const updated: Product = {
       ...editingProduct,
@@ -544,7 +611,8 @@ export const StoreManagerModal: React.FC = () => {
       subcategory: editSubcategory || editingProduct.subcategory,
       fabric: editFabric || editingProduct.fabric,
       stockCount: finalStock,
-      inStock: finalStock > 0,
+      inStock: finalInStock,
+      sizeStock: editSizeStock,
       images: finalImages,
     };
     updateProduct(updated);
@@ -553,8 +621,9 @@ export const StoreManagerModal: React.FC = () => {
     try {
       const updatedList = products.map(p => p.id === updated.id ? updated : p);
       const res = await syncCatalogToCloud(updatedList);
+      await updateProductSizeStock(updated.id, editSizeStock);
       if (res.success) {
-        showToast(`✅ "${updated.title}" stock updated to ${finalStock} pcs & live across all devices!`);
+        showToast(`✅ "${updated.title}" stock updated across all sizes & live on website!`);
         verifyCloudVisibility();
       } else {
         showToast(`⚠️ Saved on this device: ${res.message}`);
@@ -2776,15 +2845,90 @@ export const StoreManagerModal: React.FC = () => {
                             />
                           </div>
 
-                          <div>
-                            <label className="block text-stone-700 font-semibold mb-1">Available Stock Count</label>
-                            <input
-                              type="number"
-                              min="0"
-                              value={editStockCount}
-                              onChange={(e) => setEditStockCount(e.target.value)}
-                              className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded text-stone-900 focus:outline-none focus:border-amber-800"
-                            />
+                          {/* Size-by-Size Stock Manager (Per Owner Request) */}
+                          <div className="sm:col-span-2 p-3 bg-amber-50/60 border border-amber-200 rounded-lg space-y-2">
+                            <div className="flex items-center justify-between">
+                              <label className="block text-stone-800 font-bold text-xs uppercase tracking-wider">
+                                📏 Stock Per Particular Size ({editingProduct.sizes?.length || 1} sizes)
+                              </label>
+                              <span className="text-xs font-bold text-amber-950 bg-amber-100 px-2.5 py-0.5 rounded-full border border-amber-300">
+                                Total: {Object.values(editSizeStock).reduce((s, n) => s + (Number(n) || 0), 0)} pcs in stock
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-stone-600">
+                              Set inventory for each individual size. If a size's stock reaches <strong>0</strong>, the website will automatically show <strong>"Out of Stock"</strong> for that size to customers!
+                            </p>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 pt-1">
+                              {(editingProduct.sizes || ['Standard']).map((sz) => {
+                                const count = editSizeStock[sz] ?? 0;
+                                const isOut = count <= 0;
+
+                                return (
+                                  <div
+                                    key={sz}
+                                    className={`p-2.5 rounded-lg border flex flex-col justify-between gap-2 transition-colors ${
+                                      isOut
+                                        ? 'bg-rose-50/80 border-rose-300'
+                                        : 'bg-white border-stone-200 shadow-2xs'
+                                    }`}
+                                  >
+                                    <div className="flex items-center justify-between">
+                                      <span className="font-bold text-xs text-stone-900">Size: {sz}</span>
+                                      <span
+                                        className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                          isOut
+                                            ? 'bg-rose-600 text-white'
+                                            : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                        }`}
+                                      >
+                                        {isOut ? 'Out of Stock' : `${count} In Stock`}
+                                      </span>
+                                    </div>
+
+                                    {/* Counter and Toggle */}
+                                    <div className="flex items-center justify-between gap-2">
+                                      <div className="flex items-center border border-stone-300 rounded overflow-hidden bg-white">
+                                        <button
+                                          type="button"
+                                          onClick={() => handleEditSizeStockChange(sz, -1)}
+                                          disabled={count <= 0}
+                                          className="px-2.5 py-1 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs disabled:opacity-30 cursor-pointer"
+                                        >
+                                          -
+                                        </button>
+                                        <input
+                                          type="number"
+                                          min="0"
+                                          value={count}
+                                          onChange={(e) => handleEditSizeStockSet(sz, parseInt(e.target.value, 10) || 0)}
+                                          className="w-12 text-center text-xs font-mono font-bold text-stone-900 focus:outline-none py-1"
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => handleEditSizeStockChange(sz, 1)}
+                                          className="px-2.5 py-1 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs cursor-pointer"
+                                        >
+                                          +
+                                        </button>
+                                      </div>
+
+                                      <button
+                                        type="button"
+                                        onClick={() => handleEditSizeStockToggle(sz)}
+                                        className={`px-2 py-1 rounded text-[10px] font-bold cursor-pointer transition-colors ${
+                                          isOut
+                                            ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                                            : 'bg-stone-100 hover:bg-rose-100 text-stone-700 hover:text-rose-700 border border-stone-200'
+                                        }`}
+                                      >
+                                        {isOut ? 'Restore Stock' : 'Mark Out'}
+                                      </button>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
                           </div>
 
                           <div className="sm:col-span-2">
@@ -2873,46 +3017,63 @@ export const StoreManagerModal: React.FC = () => {
                               )}
                             </div>
                             <h5 className="font-semibold text-stone-900 truncate text-xs">{p.title}</h5>
-                            <div className="flex items-center gap-2 mt-1 flex-wrap">
-                              <span className="text-[11px] text-stone-500">
-                                Sizes: {p.sizes.join(', ')}
+                            {/* Size-by-size Stock breakdown */}
+                            <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                              <span className="text-[11px] text-stone-500 font-semibold">
+                                Size Stock:
                               </span>
-                              
-                              {/* Live Stock Badge */}
-                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1 ${
-                                (p.stockCount ?? 0) > 0 && p.inStock
-                                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                                  : 'bg-rose-50 text-rose-800 border border-rose-200'
-                              }`}>
-                                <span className={`w-1.5 h-1.5 rounded-full ${
-                                  (p.stockCount ?? 0) > 0 && p.inStock ? 'bg-emerald-500' : 'bg-rose-500'
-                                }`} />
-                                {(p.stockCount ?? 0) > 0 && p.inStock ? `${p.stockCount} in stock` : 'Sold Out / Out of Stock'}
-                              </span>
+                              {(p.sizes || ['Standard']).map((sz) => {
+                                const sCount = p.sizeStock && p.sizeStock[sz] !== undefined
+                                  ? p.sizeStock[sz]
+                                  : Math.max(0, p.stockCount);
+                                const isOut = sCount <= 0 || !p.inStock;
 
-                              {/* Quick 1-Click Stock Counter (- / +) */}
-                              <div className="flex items-center border border-stone-300 rounded overflow-hidden bg-stone-50">
-                                <button
-                                  type="button"
-                                  onClick={() => handleQuickStockChange(p.id, -1)}
-                                  disabled={(p.stockCount ?? 0) <= 0}
-                                  title="Reduce stock by 1"
-                                  className="px-2 py-0.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs disabled:opacity-30 cursor-pointer"
-                                >
-                                  -
-                                </button>
-                                <span className="px-2 text-xs font-mono font-bold text-stone-900">
-                                  {p.stockCount ?? 0}
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() => handleQuickStockChange(p.id, 1)}
-                                  title="Increase stock by 1"
-                                  className="px-2 py-0.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs cursor-pointer"
-                                >
-                                  +
-                                </button>
-                              </div>
+                                return (
+                                  <div
+                                    key={sz}
+                                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold border transition-colors ${
+                                      isOut
+                                        ? 'bg-rose-50 text-rose-800 border-rose-300'
+                                        : 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                                    }`}
+                                  >
+                                    <span className={isOut ? 'line-through' : ''}>{sz}:</span>
+                                    <span>{isOut ? 'Out of Stock' : `${sCount} pcs`}</span>
+
+                                    {/* 1-click micro +/- for this size */}
+                                    <button
+                                      type="button"
+                                      onClick={() => handleQuickSingleSizeStockChange(p.id, sz, -1)}
+                                      disabled={sCount <= 0}
+                                      title={`Decrease size ${sz} stock`}
+                                      className="ml-1 w-4 h-4 rounded bg-stone-200 hover:bg-stone-300 text-stone-800 flex items-center justify-center font-bold text-[9px] disabled:opacity-30 cursor-pointer"
+                                    >
+                                      -
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleQuickSingleSizeStockChange(p.id, sz, 1)}
+                                      title={`Increase size ${sz} stock`}
+                                      className="w-4 h-4 rounded bg-stone-200 hover:bg-stone-300 text-stone-800 flex items-center justify-center font-bold text-[9px] cursor-pointer"
+                                    >
+                                      +
+                                    </button>
+                                  </div>
+                                );
+                              })}
+
+                              {/* Overall Status Badge */}
+                              <span
+                                className={`px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1 ${
+                                  (p.stockCount ?? 0) > 0 && p.inStock
+                                    ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                                    : 'bg-rose-600 text-white'
+                                }`}
+                              >
+                                {(p.stockCount ?? 0) > 0 && p.inStock
+                                  ? `Total: ${p.stockCount} in stock`
+                                  : 'Sold Out / Out of Stock'}
+                              </span>
 
                               {/* Quick Toggle In-Stock / Out-of-Stock */}
                               <button
@@ -2925,7 +3086,7 @@ export const StoreManagerModal: React.FC = () => {
                                     : 'bg-emerald-600 hover:bg-emerald-700 text-white'
                                 }`}
                               >
-                                {(p.stockCount ?? 0) > 0 && p.inStock ? 'Mark Sold Out' : 'Restore Stock'}
+                                {(p.stockCount ?? 0) > 0 && p.inStock ? 'Mark All Sold Out' : 'Restore All Stock'}
                               </button>
                             </div>
                           </div>

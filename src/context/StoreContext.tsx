@@ -95,6 +95,7 @@ interface StoreContextType {
   addProduct: (product: Product) => void;
   updateProduct: (product: Product) => void;
   updateProductStock: (productId: string, newStock: number, inStock?: boolean) => Promise<any>;
+  updateProductSizeStock: (productId: string, sizeStock: Record<string, number>) => Promise<any>;
   deleteProduct: (id: string) => void;
   resetProductsToDefault: () => void;
   syncCatalog: () => Promise<any>;
@@ -117,12 +118,19 @@ const ASSET_REMAP: Record<string, string> = {
 
 export function resolveProductImage(url: string): string {
   if (!url) return straightKurtiImg;
-  if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
+  if (
+    url.startsWith('data:') ||
+    url.startsWith('http://') ||
+    url.startsWith('https://') ||
+    url.startsWith('/images/') ||
+    url.startsWith('/assets/') ||
+    url.startsWith('blob:')
+  ) {
     return url;
   }
   const lower = url.toLowerCase();
   for (const [key, assetUrl] of Object.entries(ASSET_REMAP)) {
-    if (lower.includes(key)) {
+    if (lower === key || lower.includes(`_${key}_`) || lower.endsWith(`_${key}`)) {
       return assetUrl;
     }
   }
@@ -146,6 +154,31 @@ export function normalizeProduct(p: any): Product {
     : ['Standard', 'Free Size'];
   const reviews = Array.isArray(p?.reviews) ? p.reviews : [];
 
+  // Normalize sizeStock mapping
+  let sizeStock: Record<string, number> = {};
+  if (p?.sizeStock && typeof p.sizeStock === 'object') {
+    sizeStock = { ...p.sizeStock };
+    for (const sz of sizes) {
+      if (sizeStock[sz] === undefined) {
+        sizeStock[sz] = Math.max(0, Math.floor((Number(p?.stockCount) || 1) / sizes.length)) || 1;
+      } else {
+        sizeStock[sz] = Math.max(0, Number(sizeStock[sz]) || 0);
+      }
+    }
+  } else {
+    const total = Number(p?.stockCount) !== undefined ? Number(p?.stockCount) : 10;
+    const perSize = sizes.length > 0 ? Math.max(0, Math.floor(total / sizes.length)) : total;
+    let rem = sizes.length > 0 ? total % sizes.length : 0;
+    for (const sz of sizes) {
+      sizeStock[sz] = perSize + (rem > 0 ? 1 : 0);
+      if (rem > 0) rem--;
+    }
+  }
+
+  const computedStock = Object.values(sizeStock).reduce((sum, n) => sum + (Number(n) || 0), 0);
+  const finalStock = computedStock;
+  const inStock = finalStock > 0 && p?.inStock !== false;
+
   return {
     ...p,
     id: p?.id || `sf-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
@@ -159,9 +192,10 @@ export function normalizeProduct(p: any): Product {
     occasion: p?.occasion || 'Daily Wear',
     colors,
     sizes,
+    sizeStock,
     images,
-    inStock: p?.inStock !== false,
-    stockCount: Number(p?.stockCount) || 10,
+    inStock,
+    stockCount: finalStock,
     isBestSeller: Boolean(p?.isBestSeller),
     isNew: Boolean(p?.isNew),
     expressCoimbatore: Boolean(p?.expressCoimbatore),
@@ -557,13 +591,19 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           let hasDiff = false;
           const next = prev.map(p => {
             const remote = stockMap[p.id];
-            if (remote && (remote.stockCount !== p.stockCount || remote.inStock !== p.inStock)) {
-              hasDiff = true;
-              return {
-                ...p,
-                stockCount: remote.stockCount,
-                inStock: remote.inStock
-              };
+            if (remote) {
+              const countDiff = remote.stockCount !== p.stockCount;
+              const inStockDiff = remote.inStock !== p.inStock;
+              const sizeStockDiff = remote.sizeStock && JSON.stringify(remote.sizeStock) !== JSON.stringify(p.sizeStock);
+              if (countDiff || inStockDiff || sizeStockDiff) {
+                hasDiff = true;
+                return {
+                  ...p,
+                  stockCount: remote.stockCount,
+                  inStock: remote.inStock,
+                  sizeStock: remote.sizeStock || p.sizeStock
+                };
+              }
             }
             return p;
           });
@@ -587,7 +627,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
         if (Array.isArray(cloudProducts) && cloudProducts.length > 0) {
           setProducts(prev => {
-            // Check if server catalog differs in count, stockCount, inStock, price, or title
+            // Check if server catalog differs in count, stockCount, inStock, price, title, or sizeStock
             const hasChanged =
               prev.length !== cloudProducts.length ||
               JSON.stringify(
@@ -597,6 +637,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                   inStock: p.inStock,
                   price: p.price,
                   title: p.title,
+                  sizeStock: p.sizeStock,
                 }))
               ) !==
               JSON.stringify(
@@ -606,6 +647,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                   inStock: p.inStock,
                   price: p.price,
                   title: p.title,
+                  sizeStock: p.sizeStock,
                 }))
               );
 
@@ -660,7 +702,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           setProducts(prev =>
             prev.map(p =>
               p.id === data.productId
-                ? { ...p, stockCount: data.stockCount, inStock: data.inStock }
+                ? {
+                    ...p,
+                    stockCount: data.stockCount,
+                    inStock: data.inStock,
+                    ...(data.sizeStock ? { sizeStock: data.sizeStock } : {})
+                  }
                 : p
             )
           );
@@ -891,17 +938,68 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const updateProductStock = async (productId: string, newStock: number, inStock?: boolean) => {
     const finalInStock = inStock !== undefined ? inStock : newStock > 0;
+    let targetUpdated: Product | null = null;
+    let updatedList: Product[] = [];
+
     setProducts(prev => {
-      const updatedList = prev.map(p =>
-        p.id === productId ? { ...p, stockCount: Math.max(0, newStock), inStock: finalInStock } : p
-      );
+      updatedList = prev.map(p => {
+        if (p.id === productId) {
+          const currentSizeStock = p.sizeStock ? { ...p.sizeStock } : {};
+          const sizes = p.sizes || ['Standard'];
+          if (newStock === 0) {
+            for (const sz of sizes) currentSizeStock[sz] = 0;
+          }
+          targetUpdated = {
+            ...p,
+            stockCount: Math.max(0, newStock),
+            inStock: finalInStock,
+            sizeStock: currentSizeStock
+          };
+          return targetUpdated;
+        }
+        return p;
+      });
       try {
         localStorage.setItem('shruthi_fashion_products', JSON.stringify(updatedList));
       } catch {}
       return updatedList;
     });
 
-    return await syncStockToCloud(productId, Math.max(0, newStock), finalInStock);
+    const res = await syncStockToCloud(productId, Math.max(0, newStock), finalInStock, targetUpdated?.sizeStock);
+    if (updatedList.length > 0) {
+      syncCatalogToCloud(updatedList).catch(() => {});
+    }
+    return res;
+  };
+
+  const updateProductSizeStock = async (productId: string, newSizeStock: Record<string, number>) => {
+    const computedTotal = Object.values(newSizeStock).reduce((sum, n) => sum + Math.max(0, Number(n) || 0), 0);
+    const finalInStock = computedTotal > 0;
+    let updatedList: Product[] = [];
+
+    setProducts(prev => {
+      updatedList = prev.map(p => {
+        if (p.id === productId) {
+          return {
+            ...p,
+            stockCount: computedTotal,
+            inStock: finalInStock,
+            sizeStock: newSizeStock
+          };
+        }
+        return p;
+      });
+      try {
+        localStorage.setItem('shruthi_fashion_products', JSON.stringify(updatedList));
+      } catch {}
+      return updatedList;
+    });
+
+    const res = await syncStockToCloud(productId, computedTotal, finalInStock, newSizeStock);
+    if (updatedList.length > 0) {
+      syncCatalogToCloud(updatedList).catch(() => {});
+    }
+    return res;
   };
 
   const deleteProduct = (id: string) => {
@@ -1012,6 +1110,48 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         orderHistory: [newOrder, ...user.orderHistory]
       });
     }
+
+    setAllOrders(prev => [newOrder, ...prev]);
+
+    // Automatically decrement stock for purchased items and their particular sizes
+    setProducts(prevProducts => {
+      let changed = false;
+      const nextProducts = prevProducts.map(p => {
+        const matchingCartItems = cart.filter(ci => ci.product.id === p.id);
+        if (matchingCartItems.length === 0) return p;
+
+        changed = true;
+        const currentSizeStock = p.sizeStock ? { ...p.sizeStock } : {};
+        matchingCartItems.forEach(item => {
+          const sz = item.selectedSize;
+          if (currentSizeStock[sz] !== undefined) {
+            currentSizeStock[sz] = Math.max(0, currentSizeStock[sz] - item.quantity);
+          }
+        });
+
+        const newStockCount = Object.keys(currentSizeStock).length > 0
+          ? Object.values(currentSizeStock).reduce((sum, n) => sum + (Number(n) || 0), 0)
+          : Math.max(0, (p.stockCount ?? 1) - matchingCartItems.reduce((s, it) => s + it.quantity, 0));
+
+        const updatedProd: Product = {
+          ...p,
+          stockCount: newStockCount,
+          inStock: newStockCount > 0,
+          sizeStock: currentSizeStock
+        };
+
+        syncStockToCloud(p.id, newStockCount, newStockCount > 0, currentSizeStock);
+        return updatedProd;
+      });
+
+      if (changed) {
+        try {
+          localStorage.setItem('shruthi_fashion_products', JSON.stringify(nextProducts));
+        } catch {}
+        syncCatalogToCloud(nextProducts).catch(() => {});
+      }
+      return nextProducts;
+    });
 
     setAllOrders(prev => [newOrder, ...prev]);
 
@@ -1166,6 +1306,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         addProduct,
         updateProduct,
         updateProductStock,
+        updateProductSizeStock,
         deleteProduct,
         resetProductsToDefault,
         syncCatalog,

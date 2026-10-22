@@ -88,6 +88,10 @@ export default async function handler(req: any, res: any) {
 
   // GET: Return cached products and hero mainframe config
   if (req.method === 'GET') {
+    // Edge cache header: Cache at Vercel Edge CDN for 5 mins, background revalidate
+    // This stops repetitive 3.5MB catalog downloads from burning Fast Origin Transfer
+    res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=1800');
+
     // 1. Try memory
     // 2. Try disk
     if (!cachedProducts) {

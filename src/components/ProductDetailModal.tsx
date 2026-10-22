@@ -73,7 +73,12 @@ export const ProductDetailModal: React.FC = () => {
         : ['Standard', 'Free Size'];
       setSelectedImageIdx(0);
       setSelectedColor(colors[0]?.name || 'Standard');
-      setSelectedSize(sizes[0] || 'Standard');
+      
+      // Auto-select first in-stock size if available
+      const inStockSize = sizes.find(
+        (sz) => !activeProduct.sizeStock || activeProduct.sizeStock[sz] === undefined || activeProduct.sizeStock[sz] > 0
+      ) || sizes[0];
+      setSelectedSize(inStockSize || 'Standard');
       setQuantity(1);
       setCustomNotes('');
       setShowSizeGuide(false);
@@ -100,6 +105,19 @@ export const ProductDetailModal: React.FC = () => {
   const discountPercent = originalPrice > price
     ? Math.round(((originalPrice - price) / originalPrice) * 100)
     : 0;
+
+  const allSizesOutOfStock = activeProduct.sizeStock && Object.keys(activeProduct.sizeStock).length > 0
+    ? Object.values(activeProduct.sizeStock).every((cnt) => (Number(cnt) || 0) <= 0)
+    : false;
+  const isProductOutOfStock =
+    (activeProduct.stockCount !== undefined && activeProduct.stockCount <= 0) ||
+    activeProduct.inStock === false ||
+    allSizesOutOfStock;
+
+  const isCurrentSizeOutOfStock = Boolean(
+    (activeProduct.sizeStock && selectedSize && activeProduct.sizeStock[selectedSize] !== undefined && activeProduct.sizeStock[selectedSize] <= 0) ||
+    isProductOutOfStock
+  );
 
   // Mobile swipe handlers
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -131,6 +149,7 @@ export const ProductDetailModal: React.FC = () => {
   };
 
   const handleAddToCart = () => {
+    if (isCurrentSizeOutOfStock || isProductOutOfStock) return;
     addToCart(
       activeProduct,
       selectedSize || productSizes[0],
@@ -143,6 +162,7 @@ export const ProductDetailModal: React.FC = () => {
   };
 
   const handleBuyNow = () => {
+    if (isCurrentSizeOutOfStock || isProductOutOfStock) return;
     addToCart(
       activeProduct,
       selectedSize || productSizes[0],
@@ -512,21 +532,52 @@ export const ProductDetailModal: React.FC = () => {
                   </div>
 
                   <div className="flex flex-wrap gap-2">
-                    {productSizes.map((sz) => (
-                      <button
-                        key={sz}
-                        type="button"
-                        onClick={() => setSelectedSize(sz)}
-                        className={`min-w-[44px] min-h-[40px] px-3.5 py-2 rounded-md text-xs font-semibold border transition-colors cursor-pointer ${
-                          selectedSize === sz
-                            ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
-                            : 'bg-white text-stone-800 border-stone-300 hover:bg-stone-50'
-                        }`}
-                      >
-                        {sz}
-                      </button>
-                    ))}
+                    {productSizes.map((sz) => {
+                      const isSizeOutOfStock = Boolean(
+                        (activeProduct.sizeStock && activeProduct.sizeStock[sz] !== undefined && activeProduct.sizeStock[sz] <= 0) ||
+                        activeProduct.inStock === false
+                      );
+                      const isSelected = selectedSize === sz;
+
+                      return (
+                        <button
+                          key={sz}
+                          type="button"
+                          onClick={() => setSelectedSize(sz)}
+                          className={`relative min-w-[54px] min-h-[46px] px-3.5 py-1.5 rounded-md text-xs font-semibold border transition-all cursor-pointer flex flex-col items-center justify-center ${
+                            isSizeOutOfStock
+                              ? isSelected
+                                ? 'bg-rose-50 text-rose-800 border-rose-400 ring-2 ring-rose-400'
+                                : 'bg-stone-100 text-stone-400 border-stone-200 hover:border-stone-300'
+                              : isSelected
+                              ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
+                              : 'bg-white text-stone-800 border-stone-300 hover:bg-stone-50'
+                          }`}
+                        >
+                          <span className={isSizeOutOfStock ? 'line-through decoration-rose-500 font-bold' : ''}>{sz}</span>
+                          {isSizeOutOfStock ? (
+                            <span className="text-[9px] font-bold text-rose-600 block no-underline -mt-0.5">
+                              Out of Stock
+                            </span>
+                          ) : (
+                            <span className="text-[9px] text-emerald-600 font-medium block -mt-0.5">
+                              In Stock
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
+
+                  {/* Size Out of Stock Alert Message */}
+                  {isCurrentSizeOutOfStock && (
+                    <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-800 flex items-center gap-2 animate-in fade-in">
+                      <span className="w-2 h-2 rounded-full bg-rose-600 shrink-0" />
+                      <span>
+                        Size <strong>{selectedSize}</strong> is currently <strong>Out of Stock</strong>. Please select another available size.
+                      </span>
+                    </div>
+                  )}
 
                   {/* Size Chart Accordion */}
                   {showSizeGuide && (
@@ -668,19 +719,43 @@ export const ProductDetailModal: React.FC = () => {
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
+                      disabled={isCurrentSizeOutOfStock || isProductOutOfStock}
                       onClick={handleAddToCart}
-                      className="py-3 px-4 bg-white border border-stone-800 hover:bg-stone-50 text-stone-900 text-xs sm:text-sm font-semibold rounded-md shadow-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                      className={`py-3 px-4 text-xs sm:text-sm font-semibold rounded-md shadow-xs flex items-center justify-center gap-2 transition-colors ${
+                        isCurrentSizeOutOfStock || isProductOutOfStock
+                          ? 'bg-stone-100 text-stone-400 border border-stone-200 cursor-not-allowed opacity-75'
+                          : 'bg-white border border-stone-800 hover:bg-stone-50 text-stone-900 cursor-pointer'
+                      }`}
                     >
                       <ShoppingBag className="w-4 h-4" />
-                      <span>{addedToast ? 'Added to Bag!' : 'Add to Bag'}</span>
+                      <span>
+                        {isProductOutOfStock
+                          ? 'Sold Out'
+                          : isCurrentSizeOutOfStock
+                          ? `Size ${selectedSize} Out of Stock`
+                          : addedToast
+                          ? 'Added to Bag!'
+                          : 'Add to Bag'}
+                      </span>
                     </button>
                     <button
                       type="button"
+                      disabled={isCurrentSizeOutOfStock || isProductOutOfStock}
                       onClick={handleBuyNow}
-                      className="py-3 px-4 bg-blue-700 hover:bg-blue-800 text-white text-xs sm:text-sm font-bold rounded-md shadow-sm flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                      className={`py-3 px-4 text-xs sm:text-sm font-bold rounded-md shadow-sm flex items-center justify-center gap-2 transition-colors ${
+                        isCurrentSizeOutOfStock || isProductOutOfStock
+                          ? 'bg-stone-300 text-stone-500 cursor-not-allowed opacity-75'
+                          : 'bg-blue-700 hover:bg-blue-800 text-white cursor-pointer'
+                      }`}
                     >
                       <CreditCard className="w-4 h-4 text-white" />
-                      <span>Buy Now (Razorpay)</span>
+                      <span>
+                        {isProductOutOfStock
+                          ? 'Currently Sold Out'
+                          : isCurrentSizeOutOfStock
+                          ? `Size ${selectedSize} Sold Out`
+                          : 'Buy Now (Razorpay)'}
+                      </span>
                     </button>
                   </div>
 
@@ -725,20 +800,44 @@ export const ProductDetailModal: React.FC = () => {
           <div className="flex items-center gap-2 flex-1 justify-end">
             <button
               type="button"
+              disabled={isCurrentSizeOutOfStock || isProductOutOfStock}
               onClick={handleAddToCart}
-              className="flex-1 py-2.5 px-3 bg-white border border-stone-800 text-stone-900 text-xs font-semibold rounded-lg shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition-transform"
+              className={`flex-1 py-2.5 px-3 text-xs font-semibold rounded-lg shadow-2xs flex items-center justify-center gap-1.5 transition-transform ${
+                isCurrentSizeOutOfStock || isProductOutOfStock
+                  ? 'bg-stone-100 text-stone-400 border border-stone-200 cursor-not-allowed'
+                  : 'bg-white border border-stone-800 text-stone-900 cursor-pointer active:scale-95'
+              }`}
             >
               <ShoppingBag className="w-3.5 h-3.5" />
-              <span>{addedToast ? 'Added!' : 'Add to Bag'}</span>
+              <span>
+                {isProductOutOfStock
+                  ? 'Sold Out'
+                  : isCurrentSizeOutOfStock
+                  ? 'Out of Stock'
+                  : addedToast
+                  ? 'Added!'
+                  : 'Add to Bag'}
+              </span>
             </button>
 
             <button
               type="button"
+              disabled={isCurrentSizeOutOfStock || isProductOutOfStock}
               onClick={handleBuyNow}
-              className="flex-1 py-2.5 px-3 bg-blue-700 active:bg-blue-800 text-white text-xs font-bold rounded-lg shadow-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition-transform"
+              className={`flex-1 py-2.5 px-3 text-xs font-bold rounded-lg shadow-sm flex items-center justify-center gap-1.5 transition-transform ${
+                isCurrentSizeOutOfStock || isProductOutOfStock
+                  ? 'bg-stone-300 text-stone-500 cursor-not-allowed'
+                  : 'bg-blue-700 active:bg-blue-800 text-white cursor-pointer active:scale-95'
+              }`}
             >
               <CreditCard className="w-3.5 h-3.5 text-white" />
-              <span>Buy Now</span>
+              <span>
+                {isProductOutOfStock
+                  ? 'Sold Out'
+                  : isCurrentSizeOutOfStock
+                  ? 'Sold Out'
+                  : 'Buy Now'}
+              </span>
             </button>
           </div>
         </div>

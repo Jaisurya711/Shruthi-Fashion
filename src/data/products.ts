@@ -1,4 +1,5 @@
 import { Product } from '../types/store';
+import rawStoreCatalog from '../../data/store_catalog.json';
 
 // Image assets
 import feedingKurtiImg from '../assets/images/shruthi_feeding_kurti_1791448275230.jpg';
@@ -83,7 +84,9 @@ export const SHOP_INFO = {
   openingHours: '10:00 AM – 9:30 PM (All 7 Days)',
 };
 
-export const INITIAL_PRODUCTS: Product[] = [
+export const INITIAL_PRODUCTS: Product[] = (Array.isArray(rawStoreCatalog) && rawStoreCatalog.length > 0)
+  ? (rawStoreCatalog as any[])
+  : [
   // 1. Straight Cut Kurti
   {
     id: 'sf-straight-01',

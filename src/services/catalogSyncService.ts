@@ -290,7 +290,7 @@ export async function syncHeroConfigToCloud(heroConfig: HeroConfig): Promise<{ s
 /**
  * Fetch lightweight stock updates across devices (<1KB)
  */
-export async function fetchLatestStockFromCloud(): Promise<Record<string, { stockCount: number; inStock: boolean }> | null> {
+export async function fetchLatestStockFromCloud(): Promise<Record<string, { stockCount: number; inStock: boolean; sizeStock?: Record<string, number> }> | null> {
   // 1. Try /api/stock
   try {
     const res = await fetch('/api/stock', {
@@ -324,7 +324,8 @@ export async function fetchLatestStockFromCloud(): Promise<Record<string, { stoc
 export async function syncStockToCloud(
   productId: string,
   stockCount: number,
-  inStock: boolean
+  inStock: boolean,
+  sizeStock?: Record<string, number>
 ): Promise<{ success: boolean; message: string }> {
   // 1. Instant local cross-tab broadcast
   if (syncChannel) {
@@ -334,18 +335,19 @@ export async function syncStockToCloud(
         productId,
         stockCount,
         inStock,
+        sizeStock,
         timestamp: Date.now()
       });
     } catch {}
   }
 
   // 2. Update local cached stock map
-  let currentStockMap: Record<string, { stockCount: number; inStock: boolean }> = {};
+  let currentStockMap: Record<string, { stockCount: number; inStock: boolean; sizeStock?: Record<string, number> }> = {};
   try {
     const saved = localStorage.getItem(STOCK_STORAGE_KEY);
     if (saved) currentStockMap = JSON.parse(saved);
   } catch {}
-  currentStockMap[productId] = { stockCount, inStock };
+  currentStockMap[productId] = { stockCount, inStock, ...(sizeStock ? { sizeStock } : {}) };
   try {
     localStorage.setItem(STOCK_STORAGE_KEY, JSON.stringify(currentStockMap));
   } catch {}
@@ -355,7 +357,7 @@ export async function syncStockToCloud(
     await fetch('/api/stock', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ productId, stockCount, inStock })
+      body: JSON.stringify({ productId, stockCount, inStock, sizeStock })
     });
   } catch {}
 

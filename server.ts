@@ -413,7 +413,8 @@ app.get('/api/stock', (req, res) => {
       if (p?.id) {
         stockMap[p.id] = {
           stockCount: p.stockCount !== undefined ? p.stockCount : 10,
-          inStock: p.inStock !== undefined ? p.inStock : (p.stockCount > 0)
+          inStock: p.inStock !== undefined ? p.inStock : (p.stockCount > 0),
+          sizeStock: p.sizeStock || undefined
         };
       }
     }
@@ -428,7 +429,7 @@ app.get('/api/stock', (req, res) => {
 
 app.post('/api/stock', (req, res) => {
   try {
-    const { productId, stockCount, inStock, updates } = req.body || {};
+    const { productId, stockCount, inStock, sizeStock, updates } = req.body || {};
     if (!cachedProducts && fs.existsSync(CATALOG_FILE)) {
       try {
         cachedProducts = JSON.parse(fs.readFileSync(CATALOG_FILE, 'utf-8'));
@@ -447,6 +448,9 @@ app.post('/api/stock', (req, res) => {
       if (idx !== -1) {
         cachedProducts[idx].stockCount = Math.max(0, stockCount);
         cachedProducts[idx].inStock = inStock !== undefined ? !!inStock : stockCount > 0;
+        if (sizeStock && typeof sizeStock === 'object') {
+          cachedProducts[idx].sizeStock = sizeStock;
+        }
         modified = true;
       }
     }

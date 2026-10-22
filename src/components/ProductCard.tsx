@@ -24,12 +24,27 @@ export const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
     ? Math.round(((originalPrice - price) / originalPrice) * 100)
     : 0;
 
+  const allSizesOutOfStock = product.sizeStock && Object.keys(product.sizeStock).length > 0
+    ? Object.values(product.sizeStock).every((cnt) => (Number(cnt) || 0) <= 0)
+    : false;
+  const isOutOfStock =
+    (product.stockCount !== undefined && product.stockCount <= 0) ||
+    product.inStock === false ||
+    allSizesOutOfStock;
+
+  const firstAvailableSize = product.sizes?.find(
+    (sz) => !product.sizeStock || product.sizeStock[sz] === undefined || product.sizeStock[sz] > 0
+  ) || product.sizes?.[0] || 'Standard';
+
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.stopPropagation();
-    // Use first available size and color
+    if (isOutOfStock) {
+      setActiveProduct(product);
+      return;
+    }
     addToCart(
       product,
-      product.sizes?.[0] || 'Standard',
+      firstAvailableSize,
       product.colors?.[0]?.name || 'Original',
       1
     );
@@ -37,9 +52,13 @@ export const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
 
   const handleBuyNow = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (isOutOfStock) {
+      setActiveProduct(product);
+      return;
+    }
     addToCart(
       product,
-      product.sizes?.[0] || 'Standard',
+      firstAvailableSize,
       product.colors?.[0]?.name || 'Original',
       1
     );
@@ -52,7 +71,6 @@ export const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
   };
 
   const displayImage = product.images?.[0] || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=600&q=80';
-  const isOutOfStock = (product.stockCount !== undefined && product.stockCount <= 0) || product.inStock === false;
 
   return (
     <article

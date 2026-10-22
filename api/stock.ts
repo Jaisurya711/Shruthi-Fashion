@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-let stockMap: Record<string, { stockCount: number; inStock: boolean }> = {};
+let stockMap: Record<string, { stockCount: number; inStock: boolean; sizeStock?: Record<string, number> }> = {};
 let stockLastUpdated = Date.now();
 
 const GITHUB_REPO_OWNER = 'Jaisurya711';
@@ -86,6 +86,10 @@ export default async function handler(req: any, res: any) {
 
   // GET: Return current stock map
   if (req.method === 'GET') {
+    // Edge cache header: Cache at Vercel Edge for 60s, background revalidate for 300s
+    // This dramatically reduces Fast Origin Transfer bandwidth on Vercel
+    res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+
     // 1. Try disk or memory
     if (Object.keys(stockMap).length === 0) {
       try {
@@ -97,7 +101,8 @@ export default async function handler(req: any, res: any) {
               if (p?.id) {
                 stockMap[p.id] = {
                   stockCount: p.stockCount !== undefined ? p.stockCount : 10,
-                  inStock: p.inStock !== undefined ? p.inStock : (p.stockCount > 0)
+                  inStock: p.inStock !== undefined ? p.inStock : (p.stockCount > 0),
+                  sizeStock: p.sizeStock || undefined
                 };
               }
             }
@@ -123,13 +128,14 @@ export default async function handler(req: any, res: any) {
   // POST: Update stock in real-time
   if (req.method === 'POST') {
     try {
-      const { productId, stockCount, inStock, updates } = req.body || {};
+      const { productId, stockCount, inStock, sizeStock, updates } = req.body || {};
       let modified = false;
 
       if (productId && typeof stockCount === 'number') {
         stockMap[productId] = {
           stockCount: Math.max(0, stockCount),
-          inStock: inStock !== undefined ? !!inStock : stockCount > 0
+          inStock: inStock !== undefined ? !!inStock : stockCount > 0,
+          ...(sizeStock ? { sizeStock } : {})
         };
         modified = true;
       }
@@ -139,7 +145,8 @@ export default async function handler(req: any, res: any) {
           if (item?.productId && typeof item.stockCount === 'number') {
             stockMap[item.productId] = {
               stockCount: Math.max(0, item.stockCount),
-              inStock: item.inStock !== undefined ? !!item.inStock : item.stockCount > 0
+              inStock: item.inStock !== undefined ? !!item.inStock : item.stockCount > 0,
+              ...(item.sizeStock ? { sizeStock: item.sizeStock } : {})
             };
             modified = true;
           }

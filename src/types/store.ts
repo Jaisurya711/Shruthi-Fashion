@@ -22,6 +22,7 @@ export interface Product {
   sizes: string[];
   inStock: boolean;
   stockCount: number;
+  sizeStock?: Record<string, number>;
   isBestSeller?: boolean;
   isNew?: boolean;
   expressCoimbatore: boolean; // Fast delivery in Kovundampalayam & Coimbatore 641xxx

@@ -1,89 +1,96 @@
 {
-  "updatedAt": 1792643026747,
+  "updatedAt": 1792601842538,
   "stockMap": {
-    "sf-custom-1792643012870-0aw3": {
+    "sf-custom-1792593654256-2aie": {
       "stockCount": 1,
-      "inStock": true
-    },
-    "sf-custom-1792641809329-5kqg": {
-      "stockCount": 4,
-      "inStock": true
-    },
-    "sf-custom-1792641514437-k3et": {
-      "stockCount": 4,
-      "inStock": true
-    },
-    "sf-custom-1792641424062-t9bd": {
-      "stockCount": 4,
-      "inStock": true
-    },
-    "sf-custom-1792641295964-fg1x": {
-      "stockCount": 4,
-      "inStock": true
-    },
-    "sf-custom-1792641094153-42vm": {
-      "stockCount": 1,
-      "inStock": true
-    },
-    "sf-custom-1792640804231-g7l3": {
-      "stockCount": 1,
-      "inStock": true
-    },
-    "sf-custom-1792609160011-kz7n": {
-      "stockCount": 2,
-      "inStock": true
-    },
-    "sf-custom-1792609006837-mprd": {
-      "stockCount": 2,
-      "inStock": true
-    },
-    "sf-custom-1792607222716-naf5": {
-      "stockCount": 2,
-      "inStock": true
-    },
-    "sf-custom-1792597293013-arwb": {
-      "stockCount": 15,
-      "inStock": true
-    },
-    "sf-custom-1792593884275-b1rr": {
-      "stockCount": 1,
-      "inStock": true
+      "inStock": true,
+      "sizeStock": {
+        "L": 1
+      }
     },
     "sf-custom-1792593567298-8wpl": {
       "stockCount": 1,
-      "inStock": true
+      "inStock": true,
+      "sizeStock": {
+        "L": 1
+      }
     },
     "sf-custom-1792591899998-xkeu": {
       "stockCount": 10,
-      "inStock": true
+      "inStock": true,
+      "sizeStock": {
+        "XS": 2,
+        "S": 2,
+        "M": 2,
+        "L": 2
+      }
     },
     "sf-custom-1792590101851-08sc": {
       "stockCount": 4,
-      "inStock": true
+      "inStock": true,
+      "sizeStock": {
+        "XS": 1,
+        "S": 1,
+        "M": 1,
+        "L": 1
+      }
     },
     "sf-custom-1792589591523-vz13": {
       "stockCount": 4,
-      "inStock": true
+      "inStock": true,
+      "sizeStock": {
+        "XS": 1,
+        "S": 1,
+        "M": 1,
+        "L": 1
+      }
     },
     "sf-custom-1792589332419-q72p": {
       "stockCount": 4,
-      "inStock": true
+      "inStock": true,
+      "sizeStock": {
+        "M": 1,
+        "XS": 1,
+        "S": 1,
+        "L": 1
+      }
     },
     "sf-custom-1792588971554-d453": {
       "stockCount": 4,
-      "inStock": true
+      "inStock": true,
+      "sizeStock": {
+        "M": 1,
+        "L": 1,
+        "XL": 1,
+        "XXL": 1
+      }
     },
     "sf-custom-1792588896223-6s6x": {
       "stockCount": 1,
-      "inStock": true
+      "inStock": true,
+      "sizeStock": {
+        "M": 1
+      }
     },
     "sf-custom-1792588771603-5jr4": {
       "stockCount": 4,
-      "inStock": true
+      "inStock": true,
+      "sizeStock": {
+        "M": 1,
+        "L": 1,
+        "XL": 1,
+        "XXL": 1
+      }
     },
     "sf-custom-1792588596848-yppe": {
       "stockCount": 4,
-      "inStock": true
+      "inStock": true,
+      "sizeStock": {
+        "M": 1,
+        "L": 1,
+        "XL": 1,
+        "XXL": 1
+      }
     }
   }
 }
